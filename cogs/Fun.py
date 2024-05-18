@@ -1,15 +1,11 @@
-# IMPORTS
+import datetime
+import time
 from random import randint, choice
 
 import discord
 from discord.ext import commands
 
-from views.rps_buttons import RPS_Buttons
-from views.ttt_buttons import TTT_Buttons
-from views.rr_buttons import RR_Buttons
 
-
-# COG
 class Fun(commands.Cog):
     """Miscellaneous commands"""
     
@@ -33,107 +29,24 @@ class Fun(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
     
-    # GAMES
-    @commands.hybrid_command(name="ttt", description="Tic, Tac, Toe")
-    async def ttt(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(description="The member you want to play with")):
-        """Tic, Tac, Toe"""
-        
-        # You can't play with yourself
-        if ctx.author == member:
-            return await ctx.reply('typen в крестики нолики сигма сам с собой поиграть хотел, проиграешь, даже не пытайся')
-        
-        # Making an embed
-        embed = discord.Embed(title='Tick, Tack, Toe', color=discord.Color.red())
-        embed.set_author(name=f"{ctx.author.display_name} vs {member.display_name}")
-        embed.add_field(name='Board', value=':white_large_square::white_large_square::white_large_square:\n'*3)
-        
-        # Setting up the buttons
-        buttons = TTT_Buttons(user1=ctx.author, user2=member)
-        
-        # Sending the message
-        await ctx.reply(view=buttons, embed=embed)
-    
-    @commands.hybrid_command(name="rps", description="Rock, Paper, Scissors")
-    async def rps(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(description="The member you want to play with")):
-        """Rock, Paper, Scissors"""
-        
-        # You can't play with yourself
-        if ctx.author == member:
-            return await ctx.reply('typen')
-        
-        # Making an embed
-        embed = discord.Embed(title='Rock, Paper, Scissors', color=discord.Color.red())
-        embed.add_field(name=ctx.author.display_name, value='Not Ready')
-        embed.add_field(name=member.display_name, value='Not Ready')
-        
-        # Setting up the buttons
-        buttons = RPS_Buttons(user1=ctx.author, user2=member)
-        
-        # Sending the message
-        await ctx.reply(view=buttons, embed=embed)
-
-    @commands.hybrid_command(name="rr", description="Russian Roulette")
-    async def rr(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(description="The member you want to play with")):
-        """Russian Roulette"""
-        
-        # You can't play with yourself
-        if ctx.author == member:
-            return await ctx.reply('typen застрелился не так работает')
-        
-        # Making an embed
-        embed = discord.Embed(title='Russian Roulette', color=discord.Color.red())
-        embed.set_author(name=f"{ctx.author.display_name} vs {member.display_name}")
-        embed.add_field(name='Turn', value=ctx.author.display_name)
-        embed.add_field(name='Barrel', value='⦿⦿⦿⦿⦿⦿')
-        
-        # Setting up the buttons
-        buttons = RR_Buttons(user1=ctx.author, user2=member)
-        
-        # Sending the message
-        await ctx.reply(view=buttons, embed=embed)
-    
-    # MISC
     @commands.hybrid_command(name="ip", description="Generate a random IP address")
     async def ip(self, ctx: commands.Context):
         """Generate a random IP address"""
-        # Generate 4 random numbers
-        ip_numbers = [str(randint(0,255)) for _ in range(4)]
-        
-        # Join them with a dot
-        ip_address = '.'.join(ip_numbers)
-        
-        await ctx.reply(ip_address)
+        await ctx.reply('.'.join(str(randint(0,255)) for _ in range(4)))
+    
+    @commands.hybrid_command(name="fog", description="the fog is coming.")
+    async def fog(self, ctx: commands.Context):
+        """The fog is coming"""
+        current_time = time.time()
+        fog_time = datetime.datetime(2026, 4, 7).timestamp()
+        time_difference = fog_time - current_time
+        remaining_time = datetime.timedelta(seconds=time_difference)
+        await ctx.reply(f'{remaining_time.days} days {round(remaining_time.seconds / 3600)} hours remaining...')
     
     @commands.hybrid_command(name="kys", description="Generate a random reply")
     async def kys(self, ctx: commands.Context):
         """Generate a random reply"""
         await ctx.reply(choice(self.random_replies))
-    
-    @commands.command()
-    async def poll(self, ctx: commands.Context, name: str, *args: str):
-        """Create a poll."""
-        
-        # Zipping the options to nums (only 10 nums, so only 10 options available)
-        options = zip(self.emojis_num, args)
-        
-        # Converting it into a string
-        options_str = "\n".join([f"{emoji}: {option}" for emoji, option in options])
-        
-        # Making the embed
-        embed = discord.Embed(title=f"{name}", description=options_str)
-        
-        # Setting the author, if possible
-        try:
-            embed.set_author(name=ctx.author, icon_url=ctx.author.avatar.url)
-        except:
-            pass
-        
-        # Sending the embed
-        poll = await ctx.send(embed=embed)
-        
-        # Adding reactions
-        for emoji, option in zip(self.emojis_num, args):
-            await poll.add_reaction(emoji)
     
     @commands.hybrid_command(name="rand", description="Generate a random number")
     async def rand(self, ctx: commands.Context, start: str, finish: str):
@@ -152,7 +65,7 @@ class Fun(commands.Cog):
         # Send it
         await ctx.reply(f"{randint(start, finish)}")
     
-    @commands.hybrid_command(name="randmember", description="Ping a random member from the guild")
+    @commands.hybrid_command(name="randmember", description="Ping a random member from the guild.")
     async def randmember(self, ctx: commands.Context):
         """Ping a random member from the guild"""
         
@@ -161,19 +74,6 @@ class Fun(commands.Cog):
         
         # Send a random member from the list
         await ctx.reply(f"{choice(real_members_mentions)}")
-    
-    @commands.hybrid_command(name="fakt", description="Faktorizaciya")
-    async def fakt(self, ctx: commands.Context):
-        """Faktorizaciya"""
-        
-        # Getting the fakt
-        fakt = ctx.message.content.replace('.fakt ', '', 1).casefold()
-        
-        # Translating from fakt language to real
-        result = ''.join([self.fakt_map.get(char, char) for char in fakt])
-        
-        # Sending the result
-        await ctx.reply(result, ephemeral=True)
     
     @commands.command()
     async def do(self, ctx: commands.Context, *, activity: str):
@@ -192,5 +92,3 @@ class Fun(commands.Cog):
 # SETUP
 def setup(bot: commands.Bot):
     bot.add_cog(Fun(bot))
-
-

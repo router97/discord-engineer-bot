@@ -1,8 +1,6 @@
-# IMPORTS
 import discord
 
 
-# BUTTONS
 class TTT_Buttons(discord.ui.View):
     """Tic, Tac, Toe view"""
 

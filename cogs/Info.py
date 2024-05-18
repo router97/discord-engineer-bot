@@ -1,11 +1,11 @@
-# IMPORTS
 import json
 
 import discord
 from discord.ext import commands
 
+from bot import translator
 
-# COG
+
 class Info(commands.Cog):
     """Information commands"""
     
@@ -109,11 +109,10 @@ class Info(commands.Cog):
         # Send the embed
         await ctx.send(embed=embed)
     
-    @commands.command()
-    async def info(self, ctx: commands.Context, member_ping: str = None):
+    @commands.hybrid_command(name="info", description="Get server stats")
+    async def info(self, ctx: commands.Context, member: discord.Member):
         """Get member stats."""
         
-        member = discord.utils.get(ctx.guild.members, id=int(member_ping.replace('<', '').replace('>', '').replace('@', '')))
         member_avatar = member.avatar if member.avatar else member.default_avatar
         author_avatar = ctx.author.avatar if ctx.author.avatar else ctx.author.default_avatar
         
@@ -131,12 +130,7 @@ class Info(commands.Cog):
         
         embed.add_field(name=':hourglass:   Created On', value=f"{member.created_at.year}-{member.created_at.month}-{member.created_at.day} | {member.created_at.hour}:{member.created_at.minute}:{member.created_at.second}", inline=False)
         
-        # member_activity = member.activity
-        # if member_activity:
-        #     embed.add_field(name='Activity', value=member_activity)
-        # embed.add_field(name='Total Channels', value=f"{len(server.channels)}")
-        
-        await ctx.reply(embed=embed)
+        await ctx.reply(embed=embed, silent=True)
     
     @commands.hybrid_command(name="avatar", description="Fetch a user's avatar")
     async def avatar(self, ctx: commands.Context, member: commands.MemberConverter = None):
@@ -151,16 +145,6 @@ class Info(commands.Cog):
         
         # Send the message
         await ctx.reply(f"↓ <@{member.id}>'s avatar ↓\n{member_avatar}")
-    
-    @commands.hybrid_command(name='about', description='Information about the bot')
-    async def about(self, ctx: commands.Context):
-        """About the bot."""
-        
-        # Creating the embed
-        embed = discord.Embed(title=f"About {self.bot.user.display_name}", description='', color=discord.Colour.red())
-        
-        # Sending the message
-        await ctx.reply(embed=embed)
 
 
 # SETUP

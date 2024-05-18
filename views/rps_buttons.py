@@ -1,4 +1,3 @@
-# IMPORTS
 from random import choice
 
 import discord
@@ -6,7 +5,6 @@ import discord
 from bot import bot
 
 
-# BUTTONS
 class RPS_Buttons(discord.ui.View):
     """Rock, Paper, Scissors buttons"""
     
