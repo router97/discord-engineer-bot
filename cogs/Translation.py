@@ -2,11 +2,12 @@ import json
 import os
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 import langcodes
 
-from bot import translator
-
+from bot import translator, bot
+from utilities import ensure_user_is_in_database
 
 class Translation(commands.Cog):
     """Translation description."""
@@ -16,26 +17,16 @@ class Translation(commands.Cog):
     
     @commands.hybrid_command(name="translate", description="Translate a message.")
     async def translate(self, ctx: commands.Context, *, message: str = commands.parameter(description="The message you want to translate.", displayed_name="Message")):
-        file_path = "data/users.json"
         
-        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
-            with open(file_path, "r", encoding="utf-8") as fl:
-                all_dict = json.load(fl)
-        else:
-            all_dict = {}
+        translate_to = await ctx.bot.db.fetchval('SELECT translate_to FROM users WHERE user_id = $1', ctx.author.id)
+        translate_to = langcodes.standardize_tag(translate_to)
         
-        user_key = str(ctx.author.id)
-            
-        if user_key not in all_dict:
-            all_dict[user_key] = {}
-        
-        language_code = all_dict[user_key].get('lang', 'en')
-        
-        embed = discord.Embed(color=discord.Color.red(), description=translator.translate(message, dest=language_code).text)
+        embed = discord.Embed(color=discord.Color.red(), description=translator.translate(message, dest=translate_to).text)
         
         await ctx.reply(embed=embed, ephemeral=True)
     
     @commands.hybrid_command(name="setlang", description="Set a language to translate to.")
+    @ensure_user_is_in_database()
     async def setlang(self, ctx: commands.Context, language: str = commands.parameter(default="en", description="The language you wish to translate to.", displayed_default="English", displayed_name="Language")):
         """Set a language to translate to."""
         
@@ -43,32 +34,28 @@ class Translation(commands.Cog):
             lang_obj = langcodes.Language.get(language.casefold())
             if not lang_obj.is_valid():
                 raise ValueError("Invalid language code or name")
-            language_code = lang_obj.language
-            language_name = lang_obj.display_name()
+            language_code = lang_obj.to_alpha3()
         except ValueError:
             await ctx.reply(f'Invalid language: {language}.', ephemeral=True)
             return
         
-        file_path = "data/users.json"
         
-        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
-            with open(file_path, "r", encoding="utf-8") as fl:
-                all_dict = json.load(fl)
-        else:
-            all_dict = {}
+        await bot.db.execute('UPDATE users SET translate_to = $2 WHERE user_id = $1', ctx.author.id, language_code)
         
-        user_key = str(ctx.author.id)
         
-        if user_key not in all_dict:
-            all_dict[user_key] = {}
-        
-        all_dict[user_key]['lang'] = language_code
+        await ctx.reply(f'Changed your language to {lang_obj.display_name()}', ephemeral=True)
 
-        
-        with open(file_path, "w", encoding="utf-8") as fl:
-            json.dump(all_dict, fl, indent=4)
-        
-        await ctx.reply(f'Changed your language to {language}', ephemeral=True)
+@app_commands.context_menu(name='Translate')
+async def translate_message_context_menu(interaction: discord.Interaction, message: discord.Message):
+    
+    translate_to = await bot.db.fetchval('SELECT translate_to FROM users WHERE user_id = $1', interaction.user.id)
+    translate_to = langcodes.standardize_tag(translate_to)
+    
+    embed = discord.Embed(color=discord.Color.red(), description=translator.translate(message.content, dest=translate_to).text)
+    
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+bot.tree.add_command(translate_message_context_menu)
 
 # SETUP
 def setup(bot: commands.Bot):

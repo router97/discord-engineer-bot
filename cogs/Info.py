@@ -3,7 +3,7 @@ import json
 import discord
 from discord.ext import commands
 
-from bot import translator
+from bot import bot
 
 
 class Info(commands.Cog):
@@ -145,7 +145,41 @@ class Info(commands.Cog):
         
         # Send the message
         await ctx.reply(f"↓ <@{member.id}>'s avatar ↓\n{member_avatar}")
+    
+    @commands.hybrid_command(name="indb", description="Check if the user is in the database, if so, provide the data.")
+    async def avatar(self, ctx: commands.Context, member: commands.MemberConverter = None):
+        user_id = member.id if member else ctx.author.id
+        user = await ctx.bot.db.fetchrow('SELECT * FROM users WHERE user_id = $1', user_id)
+        
+        if user:
+            db_user_id = user['user_id']
+            db_translate_to = user['translate_to']
+            await ctx.reply(f"user_id: {db_user_id}, translate_to: {db_translate_to}")
+        else:
+            await ctx.reply("User not in db.")
 
+@bot.tree.context_menu(name='Show Info')
+async def member_info_context_menu(interaction: discord.Interaction, user: discord.Member):
+    """Get member stats."""
+        
+    member_avatar = user.avatar if user.avatar else user.default_avatar
+    author_avatar = interaction.user.avatar if interaction.user.avatar else interaction.user.default_avatar
+    
+    member_roles = [f"<@&{role.id}>" for role in user.roles if role.id if role.id != 982052021957976114]
+    
+    embed = discord.Embed(title=f":bar_chart:   **{user.display_name}**", 
+                            description=f"""
+                            *{', '.join(reversed(member_roles))}*\n
+                            """,
+                            color = user.accent_color)
+    
+    embed.set_author(name=f"Requested by - {interaction.user}", icon_url=f"{author_avatar}")
+    embed.set_footer(text=f"{user.name} stats", icon_url=f"{member_avatar.url}")
+    embed.set_image(url=member_avatar.url)
+    
+    embed.add_field(name=':hourglass:   Created On', value=f"{user.created_at.year}-{user.created_at.month}-{user.created_at.day} | {user.created_at.hour}:{user.created_at.minute}:{user.created_at.second}", inline=False)
+    
+    await interaction.response.send_message(embed=embed, silent=True, ephemeral=True)
 
 # SETUP
 def setup(bot: commands.Bot):
