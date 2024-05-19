@@ -49,20 +49,32 @@ class Fun(commands.Cog):
         await ctx.reply(choice(self.random_replies))
     
     @commands.hybrid_command(name="rand", description="Generate a random number")
-    async def rand(self, ctx: commands.Context, start: str, finish: str):
+    async def rand(self, ctx: commands.Context, 
+                   fro: str = commands.parameter(
+                       default='0', 
+                       description='From this number', 
+                       displayed_default='0', 
+                       displayed_name='From'
+                   ), 
+                   to: str = commands.parameter(
+                       default='100', 
+                       description='To this number', 
+                       displayed_default='100', 
+                       displayed_name='To'
+                    )):
+        
         """Generate a random number."""
         
         # Check if given arguments are valid integers
         try:
-            start, finish = int(start), int(finish)
+            start, finish = int(fro), int(to)
         except ValueError:
-            return await ctx.reply("invalid тупень")
+            return await ctx.reply("Not a valid number.")
         
         # Check if start is equal to finish or the same
         if start == finish or start > finish:
-            return await ctx.reply("тупень инvalid")
+            return await ctx.reply("Not a valid range.")
         
-        # Send it
         await ctx.reply(f"{randint(start, finish)}")
     
     @commands.hybrid_command(name="randmember", description="Ping a random member from the guild.")
@@ -75,9 +87,13 @@ class Fun(commands.Cog):
         # Send a random member from the list
         await ctx.reply(f"{choice(real_members_mentions)}")
     
-    @commands.command()
+    @commands.command(name='do', description='Change the presence of the bot.')
     async def do(self, ctx: commands.Context, *, activity: str):
-        """Change the presence of the bot."""
+        """
+        # Example:
+            **User:** ".do Team Fortress 2"
+            *Bot's presence became: "Playing Team Fortress 2"*
+        """
         
         # Create Activity object
         new_presence = discord.Activity(type=discord.ActivityType.playing, name=activity)
@@ -87,6 +103,10 @@ class Fun(commands.Cog):
         
         # Acknowledge the action
         await ctx.reply('changed the presence!', ephemeral=True)
+    
+    async def cog_command_error(self, ctx: commands.Context, error):
+        await ctx.send_help(ctx.command)
+        print(repr(error))
 
 
 # SETUP

@@ -1,5 +1,3 @@
-import datetime
-
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -8,6 +6,7 @@ import langcodes
 from bot import translator, bot
 from utilities import ensure_user_is_in_database, ensure_user_is_in_database_interaction
 
+
 class Translation(commands.Cog):
     """Translation description."""
     
@@ -15,25 +14,25 @@ class Translation(commands.Cog):
         self.bot = bot
     
     @commands.hybrid_command(name="translate", description="Translate a message.")
+    @ensure_user_is_in_database()
     async def translate(self, ctx: commands.Context, *, message: str = commands.parameter(description="The message you want to translate.", displayed_name="Message")):
         
-        translate_to = await ctx.bot.db.fetchval('SELECT translate_to FROM users WHERE user_id = $1', ctx.author.id)
+        translate_to = await ctx.bot.db.fetchval('SELECT translate_to FROM users WHERE id = $1', ctx.author.id)
         translate_to = langcodes.standardize_tag(translate_to)
         
         translated_text = translator.translate(text=message, dest=translate_to, src='auto')
     
         embed = discord.Embed(
             color=discord.Color.red(), 
-            title=f'Translating from {langcodes.get(translated_text.src).display_name()} to {langcodes.get(translated_text.dest).display_name()}', 
+            title=f'{langcodes.get(translated_text.src).display_name()} -> {langcodes.get(translated_text.dest).display_name()}', 
             description=f'*{translated_text.text}*', 
         )
     
         await ctx.reply(embed=embed, ephemeral=True, silent=True, delete_after=60.0)
     
-    @commands.hybrid_command(name="setlang", description="Set a language to translate to.")
+    @commands.hybrid_command(name="setlang", description="Set your preferred language for translation.")
     @ensure_user_is_in_database()
     async def setlang(self, ctx: commands.Context, language: str = commands.parameter(default="en", description="The language you wish to translate to.", displayed_default="English", displayed_name="Language")):
-        """Set a language to translate to."""
         try:
             new_language = langcodes.get(language.casefold())
             if not new_language.is_valid():
@@ -49,9 +48,20 @@ class Translation(commands.Cog):
             await ctx.message.delete()
             return
         
-        old_language = await bot.db.fetchval('SELECT translate_to FROM users WHERE user_id = $1', ctx.author.id)
+        old_language = await bot.db.fetchval('SELECT translate_to FROM users WHERE id = $1', ctx.author.id)
         old_language = langcodes.get(old_language)
-        await bot.db.execute('UPDATE users SET translate_to = $2 WHERE user_id = $1', ctx.author.id, language_code)
+        
+        if old_language.to_alpha3() == new_language.to_alpha3():
+            embed = discord.Embed(
+                title="Language already set!",
+                description=f'*{new_language.display_name()}* is already set.',
+                color=discord.Color.teal(), 
+            )
+            await ctx.reply(embed=embed, delete_after=60.0, ephemeral=True, silent=True)
+            await ctx.message.delete()
+            return
+            
+        await bot.db.execute('UPDATE users SET translate_to = $2 WHERE id = $1', ctx.author.id, language_code)
         
         embed = discord.Embed(
             title="Language Preference Updated!",
@@ -66,14 +76,14 @@ class Translation(commands.Cog):
 @app_commands.context_menu(name='Translate')
 @ensure_user_is_in_database_interaction()
 async def translate_message_context_menu(interaction: discord.Interaction, message: discord.Message):
-    translate_to = await bot.db.fetchval('SELECT translate_to FROM users WHERE user_id = $1', interaction.user.id)
+    translate_to = await bot.db.fetchval('SELECT translate_to FROM users WHERE id = $1', interaction.user.id)
     translate_to = langcodes.standardize_tag(translate_to)
     
     translated_text = translator.translate(text=message.content, dest=translate_to, src='auto')
     
     embed = discord.Embed(
         color=discord.Color.red(), 
-        title=f'Translating from {langcodes.get(translated_text.src).display_name()} to {langcodes.get(translated_text.dest).display_name()}', 
+        title=f'{langcodes.get(translated_text.src).display_name()} -> {langcodes.get(translated_text.dest).display_name()}', 
         description=f'*{translated_text.text}*', 
         timestamp=message.created_at, 
     )

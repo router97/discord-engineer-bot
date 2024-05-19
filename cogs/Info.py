@@ -1,4 +1,5 @@
 import json
+import datetime
 
 import discord
 from discord.ext import commands
@@ -11,54 +12,6 @@ class Info(commands.Cog):
     
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-    
-    @commands.command()
-    async def sg(self, ctx: commands.Context, *suggestion_tuple: str):
-        """Make a suggestion related to the bot"""
-        
-        # Format the suggestion
-        suggestion = ' '.join(suggestion_tuple)
-        
-        # Get all the suggestions
-        with open("data/suggestions.json", "r", encoding="utf-8") as fl:
-            all_dict = json.load(fl)
-        
-        # Get the keys
-        user_key = str(ctx.author.id)
-        all_dict_keys = all_dict.keys()
-        
-        # Add the suggestion
-        if user_key in all_dict_keys:
-            all_dict[user_key].append(suggestion)
-        else:
-            all_dict[user_key] = [suggestion,]
-        
-        # Dump the updated suggestions into the file
-        with open("data/suggestions.json", "w", encoding="utf-8") as fl:
-            json.dump(all_dict, fl, indent=4)
-        
-        await ctx.reply('got it', ephemeral=True)
-    
-    @commands.hybrid_command(name="sgs", description="Shows all the suggestions")
-    async def sgs(self, ctx: commands.Context):
-        """Shows all the suggestions"""
-        
-        # Reading the file
-        with open("data/suggestions.json", "r", encoding="utf-8") as fl:
-            suggestions_dict = json.load(fl)
-        
-        # Creating an empty list
-        sgs = []
-        
-        # Going through member's id and their suggestions
-        sgs = [f'# <@{member_id}>\n' + '\n'.join([f'- {suggestion}' for suggestion in suggestions]) 
-               for member_id, suggestions in suggestions_dict.items()]
-        
-        # Joining everything with a new line
-        sgs_message = "\n".join(sgs)
-        
-        # Sending the message
-        await ctx.reply(sgs_message, ephemeral=True)
 
     @commands.hybrid_command(name="server", description="Get server stats")
     async def server(self, ctx: commands.Context):
@@ -136,27 +89,63 @@ class Info(commands.Cog):
     async def avatar(self, ctx: commands.Context, member: commands.MemberConverter = None):
         """Fetch a user's avatar"""
         
-        # If member is not provided, default to the author
-        if member is None:
-            member = ctx.author
+        member: discord.Member = member or ctx.author
         
         # Fetch the member's avatar
-        member_avatar = member.avatar if member.avatar else member.default_avatar
+        member_avatar: discord.Asset = member.display_avatar or member.default_avatar
+        
+        embed = discord.Embed(color=discord.Color.teal(), title=f"Avatar of {member.display_name}")
+        embed.set_image(url=member_avatar.url)
         
         # Send the message
-        await ctx.reply(f"↓ <@{member.id}>'s avatar ↓\n{member_avatar}")
+        await ctx.reply(embed=embed, delete_after=60.0, ephemeral=True, silent=True)
     
-    @commands.hybrid_command(name="indb", description="Check if the user is in the database, if so, provide the data.")
-    async def avatar(self, ctx: commands.Context, member: commands.MemberConverter = None):
-        user_id = member.id if member else ctx.author.id
-        user = await ctx.bot.db.fetchrow('SELECT * FROM users WHERE user_id = $1', user_id)
+    @commands.hybrid_command(name="db", description="Check if the user is in the database, if so, provide the data.")
+    async def db(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(default=None, description="The user you want to query.", displayed_default= 'Yourself', displayed_name="User")):
+        user_to_select = member if member else ctx.author
+        user_id = user_to_select.id
+        user = await ctx.bot.db.fetchrow('SELECT * FROM users WHERE id = $1', user_id)
         
-        if user:
-            db_user_id = user['user_id']
-            db_translate_to = user['translate_to']
-            await ctx.reply(f"user_id: {db_user_id}, translate_to: {db_translate_to}")
+        embed = discord.Embed(title=f'SELECT * FROM users WHERE id = {user_id}', timestamp=datetime.datetime.now())
+        embed.set_footer(text=user_to_select.display_name, icon_url=user_to_select.display_avatar.url)
+        
+        if not user:
+            embed.description = 'User not found'
+            embed.color = discord.Color.red()
         else:
-            await ctx.reply("User not in db.")
+            embed.color = discord.Color.teal()
+            for key, value in user.items():
+                embed.add_field(name=key, value=value, inline=True)
+        
+        await ctx.reply(embed=embed, delete_after=60.0, ephemeral=True, silent=True)
+        await ctx.message.delete()
+    
+    @commands.hybrid_command(name="listroles", description="List roles and their members.")
+    async def listroles(self, ctx: commands.Context, title: str, *, role_names: str):
+        
+        role_names_list = [role_name.strip() for role_name in role_names.split()]
+        roles: list[discord.Role] = []
+        for role_name in role_names_list:
+            role = await commands.RoleConverter().convert(ctx, role_name)
+            if role:
+                roles.append(role)
+            else:
+                await ctx.message.add_reaction(u'\u274c')
+                await ctx.reply(f"Role `{role_name}` not found.")
+                return
+        
+        embed = discord.Embed(
+            color=discord.Color.teal(), 
+            title=title, 
+            timestamp=datetime.datetime.now(), 
+        )
+        embed.set_thumbnail(url=ctx.guild.icon.url)
+        
+        for role in roles:
+            embed.add_field(name=role.name, value='\n'.join(f'- {member.mention}' for member in role.members) if role.members else '-', inline=False)
+    
+        await ctx.send(embed=embed, silent=True, allowed_mentions=discord.AllowedMentions.none())
+        await ctx.message.delete()
 
 @bot.tree.context_menu(name='Show Info')
 async def member_info_context_menu(interaction: discord.Interaction, user: discord.Member):

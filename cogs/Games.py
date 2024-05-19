@@ -1,11 +1,10 @@
 import discord
 from discord.ext import commands
  
-from views.rps_buttons import RPS_Buttons
-from views.ttt_buttons import TTT_Buttons
-from views.rr_buttons import RR_Buttons
-
 from bot import bot
+from views.rps_view import RPS_Buttons
+from views.ttt_view import TTT_Buttons
+from views.rr_view import RR_Buttons
 
 
 class Games(commands.Cog):
@@ -15,7 +14,7 @@ class Games(commands.Cog):
         self.bot = bot
     
     @commands.hybrid_command(name="ttt", description="Tic, Tac, Toe")
-    async def ttt(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(description="The member you want to play with")):
+    async def ttt(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(default=bot.user, description="The user you want to play against.", displayed_default='Bot', displayed_name='Opponent')):
         """Tic, Tac, Toe"""
         
         # You can't play with yourself
@@ -34,7 +33,7 @@ class Games(commands.Cog):
         await ctx.reply(view=buttons, embed=embed)
     
     @commands.hybrid_command(name="rps", description="Rock, Paper, Scissors")
-    async def rps(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(description="The member you want to play with")):
+    async def rps(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(default=bot.user, description="The user you want to play against.", displayed_default='Bot', displayed_name='Opponent')):
         """Rock, Paper, Scissors"""
         
         # You can't play with yourself
@@ -53,7 +52,7 @@ class Games(commands.Cog):
         await ctx.reply(view=buttons, embed=embed)
 
     @commands.hybrid_command(name="rr", description="Russian Roulette")
-    async def rr(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(description="The member you want to play with")):
+    async def rr(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(default=bot.user, description="The user you want to play against.", displayed_default='Bot', displayed_name='Opponent')):
         """Russian Roulette"""
         
         # You can't play with yourself
@@ -61,10 +60,11 @@ class Games(commands.Cog):
             return await ctx.reply('typen застрелился не так работает')
         
         # Making an embed
-        embed = discord.Embed(title='Russian Roulette', color=discord.Color.red())
+        embed = discord.Embed(color=discord.Color.red())
         embed.set_author(name=f"{ctx.author.display_name} vs {member.display_name}")
         embed.add_field(name='Turn', value=ctx.author.display_name)
         embed.add_field(name='Barrel', value='⦿⦿⦿⦿⦿⦿')
+        embed.set_footer(text='Russian Roulette', icon_url=RR_Buttons.ICON_URL)
         
         # Setting up the buttons
         buttons = RR_Buttons(user1=ctx.author, user2=member)
@@ -132,6 +132,6 @@ async def rr_context_menu(interaction: discord.Interaction, user: discord.Member
     # Sending the message
     await interaction.response.send_message(view=buttons, embed=embed)
 
-# SETUP
+
 def setup(bot: commands.Bot):
     bot.add_cog(Games(bot))

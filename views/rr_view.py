@@ -9,6 +9,7 @@ class RR_Buttons(discord.ui.View):
     """Russian Roulette"""
     
     BULLET_SYMBOL = '⦿'
+    ICON_URL = 'https://miro.medium.com/v2/resize:fit:400/0*3bpWqAfhO_7Q3vHT.png'
     
     def __init__(self, user1: discord.Member, user2: discord.Member):
         super().__init__()
