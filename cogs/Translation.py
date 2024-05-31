@@ -13,9 +13,9 @@ class Translation(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
     
-    @commands.hybrid_command(name="translate", description="Translate a message.")
+    @commands.hybrid_command(name="t", description="Translate a message.")
     @ensure_user_is_in_database()
-    async def translate(self, ctx: commands.Context, *, message: str = commands.parameter(description="The message you want to translate.", displayed_name="Message")):
+    async def t(self, ctx: commands.Context, *, message: str = commands.parameter(description="The message you want to translate.", displayed_name="Message")):
         
         translate_to = await ctx.bot.db.fetchval('SELECT translate_to FROM users WHERE id = $1', ctx.author.id)
         translate_to = langcodes.standardize_tag(translate_to)
@@ -23,7 +23,7 @@ class Translation(commands.Cog):
         translated_text = translator.translate(text=message, dest=translate_to, src='auto')
     
         embed = discord.Embed(
-            color=discord.Color.red(), 
+            color=discord.Color.teal(), 
             title=f'{langcodes.get(translated_text.src).display_name()} -> {langcodes.get(translated_text.dest).display_name()}', 
             description=f'*{translated_text.text}*', 
         )

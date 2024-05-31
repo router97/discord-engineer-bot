@@ -12,12 +12,14 @@ async def setup_cogs():
     from cogs.Games import Games
     from cogs.Info import Info
     from cogs.Translation import Translation
+    from cogs.Utilities import Utilities
     
     await bot.add_cog(Fun(bot))
     # await bot.add_cog(Moderation(bot))
     await bot.add_cog(Games(bot))
     await bot.add_cog(Info(bot))
     await bot.add_cog(Translation(bot))
+    await bot.add_cog(Utilities(bot))
     await bot.tree.sync()
 
 async def create_db_pool():

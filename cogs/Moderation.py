@@ -35,6 +35,5 @@ class Moderation(commands.Cog):
             await ctx.reply("you are missing kick permissions", ephemeral=True)
 
 
-# SETUP
 def setup(bot):
     bot.add_cog(Moderation(bot))

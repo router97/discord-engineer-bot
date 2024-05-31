@@ -1,4 +1,3 @@
-import json
 import datetime
 
 import discord
@@ -13,8 +12,8 @@ class Info(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @commands.hybrid_command(name="server", description="Get server stats")
-    async def server(self, ctx: commands.Context):
+    @commands.hybrid_command(name="serverinfo", description="Get server stats")
+    async def serverinfo(self, ctx: commands.Context):
         """Get server stats"""
         
         # Fetch the server
@@ -62,10 +61,10 @@ class Info(commands.Cog):
         # Send the embed
         await ctx.send(embed=embed)
     
-    @commands.hybrid_command(name="info", description="Get server stats")
-    async def info(self, ctx: commands.Context, member: discord.Member):
+    @commands.hybrid_command(name="user", description="Get user stats")
+    async def user(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(default=None, description="The user you want to view.", displayed_default="Yourself", displayed_name="User")):
         """Get member stats."""
-        
+        member = member or ctx.author
         member_avatar = member.avatar if member.avatar else member.default_avatar
         author_avatar = ctx.author.avatar if ctx.author.avatar else ctx.author.default_avatar
         
@@ -86,7 +85,7 @@ class Info(commands.Cog):
         await ctx.reply(embed=embed, silent=True)
     
     @commands.hybrid_command(name="avatar", description="Fetch a user's avatar")
-    async def avatar(self, ctx: commands.Context, member: commands.MemberConverter = None):
+    async def avatar(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(default=None, description="The user you want to view.", displayed_default="Yourself", displayed_name="User")):
         """Fetch a user's avatar"""
         
         member: discord.Member = member or ctx.author
@@ -102,6 +101,7 @@ class Info(commands.Cog):
     
     @commands.hybrid_command(name="db", description="Check if the user is in the database, if so, provide the data.")
     async def db(self, ctx: commands.Context, member: commands.MemberConverter = commands.parameter(default=None, description="The user you want to query.", displayed_default= 'Yourself', displayed_name="User")):
+        """Bigger description"""
         user_to_select = member if member else ctx.author
         user_id = user_to_select.id
         user = await ctx.bot.db.fetchrow('SELECT * FROM users WHERE id = $1', user_id)
@@ -119,36 +119,10 @@ class Info(commands.Cog):
         
         await ctx.reply(embed=embed, delete_after=60.0, ephemeral=True, silent=True)
         await ctx.message.delete()
-    
-    @commands.hybrid_command(name="listroles", description="List roles and their members.")
-    async def listroles(self, ctx: commands.Context, title: str, *, role_names: str):
-        
-        role_names_list = [role_name.strip() for role_name in role_names.split()]
-        roles: list[discord.Role] = []
-        for role_name in role_names_list:
-            role = await commands.RoleConverter().convert(ctx, role_name)
-            if role:
-                roles.append(role)
-            else:
-                await ctx.message.add_reaction(u'\u274c')
-                await ctx.reply(f"Role `{role_name}` not found.")
-                return
-        
-        embed = discord.Embed(
-            color=discord.Color.teal(), 
-            title=title, 
-            timestamp=datetime.datetime.now(), 
-        )
-        embed.set_thumbnail(url=ctx.guild.icon.url)
-        
-        for role in roles:
-            embed.add_field(name=role.name, value='\n'.join(f'- {member.mention}' for member in role.members) if role.members else '-', inline=False)
-    
-        await ctx.send(embed=embed, silent=True, allowed_mentions=discord.AllowedMentions.none())
-        await ctx.message.delete()
+
 
 @bot.tree.context_menu(name='Show Info')
-async def member_info_context_menu(interaction: discord.Interaction, user: discord.Member):
+async def user_info_context_menu(interaction: discord.Interaction, user: discord.Member):
     """Get member stats."""
         
     member_avatar = user.avatar if user.avatar else user.default_avatar
@@ -170,6 +144,6 @@ async def member_info_context_menu(interaction: discord.Interaction, user: disco
     
     await interaction.response.send_message(embed=embed, silent=True, ephemeral=True)
 
-# SETUP
+
 def setup(bot: commands.Bot):
     bot.add_cog(Info(bot))

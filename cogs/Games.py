@@ -72,6 +72,7 @@ class Games(commands.Cog):
         # Sending the message
         await ctx.reply(view=buttons, embed=embed)
 
+
 @bot.tree.context_menu(name='Rock, Paper, Scissors')
 async def rps_context_menu(interaction: discord.Interaction, user: discord.Member):
     """Rock, Paper, Scissors context menu."""
