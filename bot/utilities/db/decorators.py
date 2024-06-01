@@ -1,9 +1,22 @@
+"""
+Database Decorators
+==================
+
+A module with decorators, which help with dealing with databases.
+"""
+
 import discord
 from discord.ext import commands
 from discord import app_commands
 
 
 def ensure_user_is_in_database():
+    """
+    This is a command decorator, where a **discord.Context** variable is used.
+    
+    It checks whether the user who is issuing the command has a database entry.
+    If not, creates one.
+    """
     async def predicate(ctx: commands.Context):
         bot = ctx.bot
         
@@ -20,6 +33,12 @@ def ensure_user_is_in_database():
 
 
 def ensure_user_is_in_database_interaction():
+    """
+    This is an interaction decorator, where **discord.Interaction** variable is used.
+    
+    It checks whether the user who is the intraction's author has a database entry.
+    If not, creates one.
+    """
     async def predicate(interaction: discord.Interaction):
         bot = interaction.client
         

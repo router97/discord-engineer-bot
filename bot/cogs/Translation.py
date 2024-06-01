@@ -1,3 +1,10 @@
+"""
+Translation
+===========
+
+This cog module contains commands that help with localization and translation.
+"""
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -5,7 +12,7 @@ import langcodes
 from googletrans import Translator
 
 from core.bot import bot
-from utilities.database import ensure_user_is_in_database, ensure_user_is_in_database_interaction
+from bot.utilities.db.decorators import ensure_user_is_in_database, ensure_user_is_in_database_interaction
 
 
 translator = Translator()

@@ -1,3 +1,10 @@
+"""
+Tic-tac-toe
+============
+
+This module contains logic and message components for a game of tic-tac-toe.
+"""
+
 import discord
 
 

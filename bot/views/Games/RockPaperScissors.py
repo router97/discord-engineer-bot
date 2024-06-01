@@ -1,3 +1,10 @@
+"""
+Rock, Paper, Scissors
+=====================
+
+This module contains logic and message components for a rock, paper, scissors game.
+"""
+
 from random import choice
 
 import discord

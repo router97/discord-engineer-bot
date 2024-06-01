@@ -1,10 +1,18 @@
+"""
+Games
+=====
+
+This cog module contains some simple message-based games
+using message components like embeds and buttons.
+"""
+
 import discord
 from discord import app_commands
 from discord.ext import commands
  
-from views.TicTacToe import TicTacToeView
-from views.RockPaperScissors import RockPaperScissorsView
-from views.RussianRoulette import RussianRouletteView
+from bot.views.Games.TicTacToe import TicTacToeView
+from bot.views.Games.RockPaperScissors import RockPaperScissorsView
+from bot.views.Games.RussianRoulette import RussianRouletteView
 
 
 class Games(commands.Cog):

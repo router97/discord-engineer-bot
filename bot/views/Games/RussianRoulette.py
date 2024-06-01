@@ -1,3 +1,10 @@
+"""
+Russian Roulette
+================
+
+This module contains logic and message components for a game of russian roulette.
+"""
+
 from random import shuffle
 
 import discord

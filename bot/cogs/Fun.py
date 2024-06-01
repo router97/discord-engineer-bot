@@ -1,3 +1,10 @@
+"""
+Fun
+===
+
+This cog module contains miscellaneous commands, mostly without actual purpose.
+"""
+
 import datetime
 import time
 from random import randint, choice
