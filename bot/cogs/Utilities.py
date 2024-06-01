@@ -1,3 +1,11 @@
+"""
+Utilities
+=========
+
+This cog module contains server utilities that are sometimes useful, 
+like picking a random number or a random user from the guild.
+"""
+
 import datetime
 from random import randint, choice
 

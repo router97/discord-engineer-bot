@@ -1,11 +1,16 @@
+"""
+Rock, Paper, Scissors
+=====================
+
+This module contains logic and message components for a rock, paper, scissors game.
+"""
+
 from random import choice
 
 import discord
 
-from bot import bot
 
-
-class RPS_Buttons(discord.ui.View):
+class RockPaperScissorsView(discord.ui.View):
     """Rock, Paper, Scissors buttons"""
     
     def __init__(self, user1: discord.Member, user2: discord.Member):
@@ -21,6 +26,12 @@ class RPS_Buttons(discord.ui.View):
             ('scissors', 'rock'): self.user2.display_name,
             ('scissors', 'paper'): self.user1.display_name,
         }
+    
+    async def setup_embed(self) -> discord.Embed:
+        embed = discord.Embed(title='Rock, Paper, Scissors', color=discord.Color.red())
+        embed.add_field(name=self.user1.display_name, value='Not Ready')
+        embed.add_field(name=self.user2.display_name, value='Not Ready')
+        return embed
     
     async def game_logic(self) -> str:
         """Game logic for Rock, Paper, Scissors"""
@@ -45,7 +56,7 @@ class RPS_Buttons(discord.ui.View):
             return
         
         # Generate a response, if the player is the bot
-        if self.user2 == bot.user:
+        if self.user2 == interaction.client.user:
             self.pick.update({self.user2: choice(['rock', 'paper', 'scissors'])})
         
         # Save the pick

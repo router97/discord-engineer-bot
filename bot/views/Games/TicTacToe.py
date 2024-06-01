@@ -1,8 +1,15 @@
+"""
+Tic-tac-toe
+============
+
+This module contains logic and message components for a game of tic-tac-toe.
+"""
+
 import discord
 
 
-class TTT_Buttons(discord.ui.View):
-    """Tic, Tac, Toe view"""
+class TicTacToeView(discord.ui.View):
+    """Tic-tac-toe view"""
 
     _button_data = [
             ('1', 0),
@@ -18,6 +25,12 @@ class TTT_Buttons(discord.ui.View):
     EMPTY_SYMBOL = '⬜'
     CROSS_SYMBOL = '❌'
     CIRCLE_SYMBOL = '⭕'
+    
+    async def setup_embed(self) -> discord.Embed:
+        embed = discord.Embed(title='Tic-tac-toe', color=discord.Color.red())
+        embed.set_author(name=f"{self.user1.display_name} vs {self.user2.display_name}")
+        embed.add_field(name='Board', value=':white_large_square::white_large_square::white_large_square:\n'*3)
+        return embed
     
     def __init__(self, user1: discord.Member, user2: discord.Member):
         super().__init__()
@@ -78,9 +91,9 @@ class TTT_Buttons(discord.ui.View):
         # Check every combination for a win
         for checking in (board_map_horizontal, board_map_vertical, board_map_cross1, board_map_cross2):
             for check in checking:
-                if check == [TTT_Buttons.CROSS_SYMBOL, TTT_Buttons.CROSS_SYMBOL, TTT_Buttons.CROSS_SYMBOL]:
+                if check == [self.CROSS_SYMBOL, self.CROSS_SYMBOL, self.CROSS_SYMBOL]:
                     return self.user1.id
-                elif check == [TTT_Buttons.CIRCLE_SYMBOL, TTT_Buttons.CIRCLE_SYMBOL, TTT_Buttons.CIRCLE_SYMBOL]:
+                elif check == [self.CIRCLE_SYMBOL, self.CIRCLE_SYMBOL, self.CIRCLE_SYMBOL]:
                     return self.user2.id
     
     async def callback(self, interaction: discord.Interaction):

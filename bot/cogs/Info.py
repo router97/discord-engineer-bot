@@ -1,9 +1,17 @@
+"""
+Info
+====
+
+This cog module contains mostly commands that display information about something.
+For example, displaying information about a certain user or a guild.
+"""
+
 import datetime
 
 import discord
 from discord.ext import commands
 
-from bot import bot
+from core.bot import bot
 
 
 class Info(commands.Cog):
