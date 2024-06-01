@@ -34,6 +34,7 @@ This cog module contains commands that help with localization and translation.
 
 
 ## Utilities
+This cog module contains server utilities that are sometimes useful, like picking a random number or a random user from the guild.
 
 | Command    | Description                                              | Has a context menu? |
 |------------|----------------------------------------------------------|---------------------|
@@ -43,6 +44,7 @@ This cog module contains commands that help with localization and translation.
 
 
 ## Info
+This cog module contains mostly commands that display information about something. For example, displaying information about a certain user or a guild.
 
 | Command    | Description                              | Has a context menu? |
 |------------|------------------------------------------|---------------------|
