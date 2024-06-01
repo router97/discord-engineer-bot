@@ -28,3 +28,12 @@ This cog module contains commands that help with localization and translation.
 |---------|----------------------------------------------|---------------------|
 | t       | Translate a message.                         | Yes.                |
 | setlang | Set your preferred language for translation. | No.                 |
+
+
+## Utilities
+
+| Command    | Description                                              | Has a context menu? |
+|------------|----------------------------------------------------------|---------------------|
+| rand       | Generate a random number in the provided range.          | No.                 |
+| randmember | Ping a random member from the guild.                     | No.                 |
+| listroles  | Generate an embed with provided roles and their members. | No.                 |
