@@ -5,12 +5,14 @@ It's a simple discord bot with features like: Games, Translation, Utilities
 > [!IMPORTANT]
 > These docs are unfinished.
 
+
 # Commands
 Commands of this bot.
 
 [Games](#games)
 
 [Translation](#translation)
+
 
 ## Games
 This cog module contains some simple message-based games using message components like embeds and buttons.
@@ -20,6 +22,7 @@ This cog module contains some simple message-based games using message component
 | ttt     | A simple tic-tac-toe game.           | Yes.                |
 | rps     | A simple rock, paper, scissors game. | Yes.                |
 | rr      | A simple russian roulette game.      | Yes.                |
+
 
 ## Translation
 This cog module contains commands that help with localization and translation.
@@ -37,3 +40,12 @@ This cog module contains commands that help with localization and translation.
 | rand       | Generate a random number in the provided range.          | No.                 |
 | randmember | Ping a random member from the guild.                     | No.                 |
 | listroles  | Generate an embed with provided roles and their members. | No.                 |
+
+
+## Info
+
+| Command    | Description                              | Has a context menu? |
+|------------|------------------------------------------|---------------------|
+| serverinfo | Display the current guild's information. | No.                 |
+| userinfo   | Display a user's information.            | Yes.                |
+| avatar     | Display a user's avatar.                 | No.                 |
