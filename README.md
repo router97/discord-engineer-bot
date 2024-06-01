@@ -2,17 +2,15 @@
 
 It's a simple discord bot with features like: Games, Translation, Utilities
 
+Table of contents:
+- [Commands](#commands)
+- [Credits](#credits)
+
 > [!IMPORTANT]
 > These docs are unfinished.
 
 
 # Commands
-Commands of this bot.
-
-[Games](#games)
-
-[Translation](#translation)
-
 
 ## Games
 This cog module contains some simple message-based games using message components like embeds and buttons.
@@ -62,3 +60,29 @@ This cog module contains miscellaneous commands, mostly without actual purpose.
 | kys     | Kys.                                          | No.                 |
 | do      | Change the bot's presence.                    | No.                 |
 | fog     | Display remaining time until the fog arrives. | No.                 |
+
+
+# Credits
+**[discord.py](https://github.com/Rapptz/discord.py)**
+  
+> For making an API wrapper for Discord.
+
+
+**[asyncpg](https://github.com/MagicStack/asyncpg)**
+  
+> For making a [PostgreSQL](https://www.postgresql.org/) database client library for python with [asyncio](https://docs.python.org/3/library/asyncio.html).
+
+
+**[Discord](https://discord.com/)**
+
+> For existing.
+
+
+**TheBluSoldier**
+
+> For suggestions.
+
+
+**MANKE**
+
+> For suggestions.
