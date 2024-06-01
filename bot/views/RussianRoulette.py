@@ -2,10 +2,8 @@ from random import shuffle
 
 import discord
 
-from bot import bot
 
-
-class RR_Buttons(discord.ui.View):
+class RussianRouletteView(discord.ui.View):
     """Russian Roulette"""
     
     BULLET_SYMBOL = '⦿'
@@ -18,6 +16,14 @@ class RR_Buttons(discord.ui.View):
         self.player = user1
         self.barrel = [None, None, None, None, None, 'bullet']
         shuffle(self.barrel)
+    
+    async def setup_embed(self) -> discord.Embed:
+        embed = discord.Embed(color=discord.Color.red())
+        embed.set_author(name=f"{self.user1.display_name} vs {self.user2.display_name}")
+        embed.add_field(name='Turn', value=self.user1.display_name)
+        embed.add_field(name='Barrel', value=f"{self.BULLET_SYMBOL * len(self.barrel)}")
+        embed.set_footer(text='Russian Roulette', icon_url=self.ICON_URL)
+        return embed
     
     async def process_interaction(self, interaction: discord.interactions.Interaction, button: discord.ui.Button):
         """Process button interaction"""
@@ -38,7 +44,7 @@ class RR_Buttons(discord.ui.View):
         self.player = self.user2 if self.player == self.user1 else self.user1
         
         # If the player is a bot, make a move and change the player back
-        if self.player == bot.user:
+        if self.player == interaction.client.user:
             if not self.barrel:
                 outcome = None
             else:

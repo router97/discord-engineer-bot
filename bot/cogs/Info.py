@@ -3,7 +3,7 @@ import datetime
 import discord
 from discord.ext import commands
 
-from bot import bot
+from core.bot import bot
 
 
 class Info(commands.Cog):

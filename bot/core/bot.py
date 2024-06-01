@@ -1,16 +1,19 @@
+import os
+from dotenv import load_dotenv
+
 from discord import Intents
 from discord.ext.commands import Bot
-from googletrans import Translator
 
-from config import config
+
+load_dotenv()
 
 
 intents = Intents.default()
 intents.members = True
 intents.message_content = True
 
+
 bot = Bot(
-    command_prefix=config['prefix'], 
+    command_prefix=os.getenv('PREFIX'), 
     intents=intents, 
 )
-translator = Translator()
