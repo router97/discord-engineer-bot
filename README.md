@@ -49,3 +49,14 @@ This cog module contains commands that help with localization and translation.
 | serverinfo | Display the current guild's information. | No.                 |
 | userinfo   | Display a user's information.            | Yes.                |
 | avatar     | Display a user's avatar.                 | No.                 |
+
+
+## Fun
+This cog module contains miscellaneous commands, mostly without actual purpose.
+
+| Command | Description                                   | Has a context menu? |
+|---------|-----------------------------------------------|---------------------|
+| ip      | Display a random IPv4 adress.                 | No.                 |
+| kys     | Kys.                                          | No.                 |
+| do      | Change the bot's presence.                    | No.                 |
+| fog     | Display remaining time until the fog arrives. | No.                 |
