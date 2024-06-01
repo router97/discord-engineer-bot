@@ -12,7 +12,7 @@ import langcodes
 from googletrans import Translator
 
 from core.bot import bot
-from bot.utilities.db.decorators import ensure_user_is_in_database, ensure_user_is_in_database_interaction
+from utilities.db.decorators import ensure_user_is_in_database, ensure_user_is_in_database_interaction
 
 
 translator = Translator()

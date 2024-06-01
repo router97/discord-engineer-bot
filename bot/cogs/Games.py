@@ -10,9 +10,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
  
-from bot.views.Games.TicTacToe import TicTacToeView
-from bot.views.Games.RockPaperScissors import RockPaperScissorsView
-from bot.views.Games.RussianRoulette import RussianRouletteView
+from views.Games.TicTacToe import TicTacToeView
+from views.Games.RockPaperScissors import RockPaperScissorsView
+from views.Games.RussianRoulette import RussianRouletteView
 
 
 class Games(commands.Cog):
