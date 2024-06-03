@@ -10,9 +10,12 @@ import os
 import logging
 import atexit
 import asyncio
+import time
+import datetime
 from dotenv import load_dotenv
 
 import asyncpg
+from discord import Activity, ActivityType, PartialEmoji, Status
 
 from core.bot import bot
 
@@ -60,6 +63,16 @@ async def create_db_pool() -> None:
         logger.info('DATABASE: Successfully connected to %s.', os.getenv('DATABASE_NAME'))
 
 
+async def setup_activity() -> None:
+    """
+    Doc
+    """
+    activity: Activity = Activity(
+        
+    )
+    await bot.change_presence(activity=activity, status=Status.online)
+
+
 @bot.event
 async def on_ready() -> None:
     """
@@ -69,6 +82,7 @@ async def on_ready() -> None:
     """
     await create_db_pool()
     await setup_cogs()
+    await setup_activity()
     logger.info("Logged in as %s (User ID: %s).", bot.user.display_name, bot.user.id)
 
 

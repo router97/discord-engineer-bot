@@ -83,7 +83,7 @@ class RockPaperScissorsView(discord.ui.View):
         """
         Sets up or updates the embed for the game.
         """
-        if not embed_to_update:
+        if embed_to_update is None:
             embed: discord.Embed = discord.Embed(title='Rock, Paper, Scissors', color=discord.Color.red())
             embed.add_field(name=self.user1.display_name, value='Not Ready')
             embed.add_field(name=self.user2.display_name, value='Not Ready')
