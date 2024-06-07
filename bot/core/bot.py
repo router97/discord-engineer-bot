@@ -11,9 +11,8 @@ from dotenv import load_dotenv
 from discord import Intents
 from discord.ext.commands import Bot
 
+from core.config import COMMAND_PREFIX
 
-# Load environment variables from .env file
-load_dotenv()
 
 # Configure bot intents
 intents = Intents.default()
@@ -22,6 +21,6 @@ intents.message_content = True
 
 # Create bot instance
 bot = Bot(
-    command_prefix=os.getenv('PREFIX'),
+    command_prefix=COMMAND_PREFIX,
     intents=intents,
 )

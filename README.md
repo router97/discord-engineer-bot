@@ -56,7 +56,7 @@ This cog module contains miscellaneous commands, mostly without actual purpose.
 
 | Command | Description                                   | Has a context menu? |
 |---------|-----------------------------------------------|---------------------|
-| ip      | Display a random IPv4 adress.                 | No.                 |
+| ip      | Display a random IPv4 address.                | No.                 |
 | kys     | Kys.                                          | No.                 |
 | do      | Change the bot's presence.                    | No.                 |
 | fog     | Display remaining time until the fog arrives. | No.                 |
@@ -70,7 +70,7 @@ This cog module contains miscellaneous commands, mostly without actual purpose.
 
 **[asyncpg](https://github.com/MagicStack/asyncpg)**
   
-> For making a [PostgreSQL](https://www.postgresql.org/) database client library for python with [asyncio](https://docs.python.org/3/library/asyncio.html).
+> For making a [Postgres](https://www.postgresql.org/) database client library for python with [asyncio](https://docs.python.org/3/library/asyncio.html).
 
 
 **[Discord](https://discord.com/)**
