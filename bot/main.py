@@ -11,9 +11,8 @@ import atexit
 import asyncio
 
 import asyncpg
-from discord import Activity, Status
 
-from core.bot import bot
+from core.bot import bot, setup_activity
 from core.config import *
 
 from cogs.Fun import Fun
@@ -54,16 +53,6 @@ async def create_db_pool() -> None:
         logger.error('DATABASE: Failed to connect to %s. Error: %s', DATABASE_NAME, e)
     else:
         logger.info('DATABASE: Successfully connected to %s.', DATABASE_NAME)
-
-
-async def setup_activity() -> None:
-    """
-    Doc
-    """
-    activity: Activity = Activity(
-
-    )
-    await bot.change_presence(activity=activity, status=Status.online)
 
 
 @bot.event

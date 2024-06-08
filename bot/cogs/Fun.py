@@ -13,6 +13,8 @@ import discord
 from discord.ext import commands
 from faker import Faker
 
+from core.bot import setup_activity
+
 faker = Faker()
 
 
@@ -87,7 +89,15 @@ class Fun(commands.Cog):
         await ctx.reply(choice(self.RANDOM_REPLIES))
 
     @commands.command(name='do', description='Change the presence of the bot.')
-    async def do(self, ctx: commands.Context, *, name: str) -> None:
+    async def do(
+            self,
+            ctx: commands.Context,
+            *,
+            name: str = commands.parameter(
+                description="The text, which would be set as the bot's activity.",
+                displayed_name='Name',
+            )
+    ) -> None:
         """
         Changes the bot's presence.
 
@@ -98,8 +108,7 @@ class Fun(commands.Cog):
         :return: The function only sends a Discord message, doesn't return anything in the code.
         :rtype: None
         """
-        new_presence = discord.Activity(type=discord.ActivityType.playing, name=name)
-        await self.bot.change_presence(activity=new_presence, status=discord.Status.do_not_disturb)
+        await setup_activity(name)
         await ctx.reply(
             content=f"Changed the bot's presence to `{name}`.",
             delete_after=60.0,

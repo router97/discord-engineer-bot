@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "discord-engineer-bot"
-version = "0.1.0a0"
+version = "0.1.0"
 description = "A small Discord bot with some games and utilities."
 authors = ["router97"]
 license = "MIT"
