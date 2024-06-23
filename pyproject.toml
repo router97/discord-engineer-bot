@@ -15,6 +15,7 @@ python-dotenv = "^1.0.1"
 langcodes = "^3.4.0"
 googletrans = "^3.0.0"
 faker = "^25.8.0"
+numerize = "^0.12"
 
 
 [build-system]

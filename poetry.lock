@@ -682,6 +682,16 @@ files = [
 ]
 
 [[package]]
+name = "numerize"
+version = "0.12"
+description = "Convert large numbers into readable numbers for humans."
+optional = false
+python-versions = "*"
+files = [
+    {file = "numerize-0.12.tar.gz", hash = "sha256:5548fe72adceb2c7964998179697d80117bb117f57cd02f872cf5db40d615c04"},
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
@@ -866,4 +876,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "7539998767a7c8288623220529220b30214d98d9c88f10d5e20fb73a1f843618"
+content-hash = "2ecdea18e1099f2f0182965c09666b7d90853f52080bf9169b89d1a44ef32213"

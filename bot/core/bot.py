@@ -20,6 +20,7 @@ project_version: str = importlib.metadata.version('discord-engineer-bot')
 intents = Intents.default()
 intents.members = True
 intents.message_content = True
+intents.presences = True
 
 # Create bot instance
 bot = Bot(
