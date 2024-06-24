@@ -8,11 +8,15 @@ and stores it in it's **bot** variable.
 from typing import Optional
 import importlib.metadata
 
-from discord import Intents, Activity, ActivityType, Status, PartialEmoji
-from discord.ext.commands import Bot
+from discord import Intents, Activity, ActivityType, Status
+from discord.ext import commands
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from .config import COMMAND_PREFIX
-
+from .help_command import CustomHelpCommand
 
 project_version: str = importlib.metadata.version('discord-engineer-bot')
 
@@ -23,9 +27,10 @@ intents.message_content = True
 intents.presences = True
 
 # Create bot instance
-bot = Bot(
+bot = commands.Bot(
     command_prefix=COMMAND_PREFIX,
     intents=intents,
+    help_command=CustomHelpCommand(),
 )
 
 
