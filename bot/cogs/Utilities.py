@@ -2,10 +2,9 @@
 Utilities
 =========
 
-This cog module contains server utilities that are sometimes useful, 
+This cog module contains server utilities that are somewhat useful,
 like picking a random number or a random user from the guild.
 """
-
 import datetime
 from random import randint, choice
 
@@ -13,79 +12,185 @@ import discord
 from discord.ext import commands
 
 
-class Utilities(commands.Cog):
-    """Miscellaneous commands"""
-    
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-    
+class Utilities(commands.Cog, name='Utilities', description='Somewhat useful commands'):
+    """
+    Utility Cog.
+
+    This cog contains various utility commands,
+    which can sometimes be useful for quality of life.
+    """
+    def __init__(self, bot: commands.Bot) -> None:
+        """
+        Initializes the cog.
+
+        :param bot: The bot that this cog belongs to.
+        :type bot: commands.Bot
+        :return: Nothing.
+        :rtype: None
+        """
+        self.bot: commands.Bot = bot
+
     @commands.hybrid_command(name="rand", description="Generate a random number")
-    async def rand(self, ctx: commands.Context, 
-                   fro: str = commands.parameter(
-                       default='0', 
-                       description='From this number', 
-                       displayed_default='0', 
-                       displayed_name='From'
-                   ), 
-                   to: str = commands.parameter(
-                       default='100', 
-                       description='To this number', 
-                       displayed_default='100', 
-                       displayed_name='To'
-                    )):
-        
-        """Generate a random number."""
-        
-        # Check if given arguments are valid integers
+    async def rand(
+            self,
+            ctx: commands.Context,
+            fro: int = commands.parameter(
+                default=0,
+                description='From which number',
+                displayed_default='0',
+                displayed_name='From',
+            ),
+            to: int = commands.parameter(
+                default=100,
+                description='To which number',
+                displayed_default='100',
+                displayed_name='To',
+            ),
+    ) -> None:
+        """
+        Replies with a random number between fro and to.
+
+        :param ctx: The context in which the command is invoked.
+        :type ctx: commands.Context
+        :param fro: From which number.
+        :type fro: int
+        :param to: To which number.
+        :type to: int
+        :return: None. The function only sends a Discord message, doesn't return anything in the code.
+        :rtype: None
+        """
+        if fro == to or fro > to:
+            embed = discord.Embed(
+                title="Error!",
+                description=f'**Invalid range(from {fro} to {to})!**',
+                color=discord.Color.red(),
+            )
+            await ctx.message.add_reaction('❌')
+        else:
+            random_number: int = randint(fro, to)
+
+            embed: discord.Embed = discord.Embed(
+                title=str(random_number),
+                color=discord.Color.teal()
+            )
+            embed.set_author(name=f'A random number between {fro} and {to}:')
+
+        await ctx.reply(
+            embed=embed,
+            silent=True,
+            ephemeral=True,
+            delete_after=60.0,
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
         try:
-            start, finish = int(fro), int(to)
-        except ValueError:
-            return await ctx.reply("Not a valid number.")
-        
-        # Check if start is equal to finish or the same
-        if start == finish or start > finish:
-            return await ctx.reply("Not a valid range.")
-        
-        await ctx.reply(f"{randint(start, finish)}")
-    
-    @commands.hybrid_command(name="randmember", description="Ping a random member from the guild.")
-    async def randmember(self, ctx: commands.Context):
-        """Ping a random member from the guild"""
-        
-        # Get a list of server members without bots
-        real_members_mentions = [member.mention for member in ctx.guild.members if not member.bot]
-        
-        # Send a random member from the list
-        await ctx.reply(f"{choice(real_members_mentions)}")
-    
-    @commands.hybrid_command(name="listroles", description="List roles and their members.")
-    async def listroles(self, ctx: commands.Context, title: str, *, role_names: str):
-        
-        role_names_list = [role_name.strip() for role_name in role_names.split()]
-        roles: list[discord.Role] = []
-        for role_name in role_names_list:
-            role = await commands.RoleConverter().convert(ctx, role_name)
-            if role:
-                roles.append(role)
-            else:
-                await ctx.message.add_reaction(u'\u274c')
-                await ctx.reply(f"Role `{role_name}` not found.")
-                return
-        
-        embed = discord.Embed(
-            color=discord.Color.teal(), 
-            title=title, 
-            timestamp=datetime.datetime.now(), 
+            await ctx.message.delete(delay=60.0)
+        except (discord.Forbidden, discord.NotFound, discord.HTTPException) as e:
+            print(f'Failed deleting message! {e}')
+
+    @commands.hybrid_command(name="randmember", description="Ping a random member from the server")
+    @commands.guild_only()
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def randmember(
+            self,
+            ctx: commands.Context
+    ) -> None:
+        """
+        Pings a random member from the guild the command was invoked in.
+
+        :param ctx: The context in which the command is invoked.
+        :type ctx: commands.Context
+        :return: None. The function only sends a Discord message, doesn't return anything in the code.
+        :rtype: None
+        """
+        real_members: list[discord.Member] = [member for member in ctx.guild.members if not member.bot]
+
+        if not real_members:
+            embed = discord.Embed(
+                title="Error!",
+                description=f'**There are no real members on this server!**',
+                color=discord.Color.red(),
+            )
+            await ctx.message.add_reaction('❌')
+            await ctx.reply(
+                embed=embed,
+                silent=True,
+                ephemeral=True,
+                delete_after=60.0,
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+            try:
+                await ctx.message.delete(delay=60.0)
+            except (discord.Forbidden, discord.NotFound, discord.HTTPException) as e:
+                print(f'Failed deleting message! {e}')
+
+        random_member: discord.Member = choice(real_members)
+        await ctx.reply(random_member.mention)
+
+    @commands.hybrid_command(name="listroles", description="Produce an embed, listing specified roles and their members")
+    @commands.guild_only()
+    async def listroles(
+            self,
+            ctx: commands.Context,
+            roles: commands.Greedy[discord.Role] = commands.parameter(
+                description='The roles to list',
+                displayed_name='Roles',
+            ),
+            *,
+            title: str = commands.parameter(
+                description='The title of the produced embed',
+                displayed_name='Title',
+            ),
+    ) -> None:
+        """
+        Replies with an embed, which lists provided roles and their respectful members.
+
+        :param ctx: The context in which the command is invoked.
+        :type ctx: commands.Context
+        :param title: The title of the produced embed
+        :type title: str
+        :param roles: The roles to list
+        :type roles: commands.Greedy[discord.Role]
+        :return: None. The function only sends a Discord message, doesn't return anything in the code.
+        :rtype: None
+        """
+        embed: discord.Embed = discord.Embed(
+            color=discord.Color.teal(),
+            title=title,
+            timestamp=datetime.datetime.now(),
         )
         embed.set_thumbnail(url=ctx.guild.icon.url)
-        
+
         for role in roles:
-            embed.add_field(name=role.name, value='\n'.join(f'- {member.mention}' for member in role.members) if role.members else '-', inline=False)
-    
-        await ctx.send(embed=embed, silent=True, allowed_mentions=discord.AllowedMentions.none())
-        await ctx.message.delete()
+            embed.add_field(
+                name=role.name,
+                value='\n'.join(f'- {member.mention}' for member in role.members) if role.members else '-',
+                inline=False
+            )
+
+        await ctx.reply(
+            embed=embed,
+            silent=True,
+            ephemeral=True,
+            delete_after=60.0,
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
+        try:
+            await ctx.message.delete()
+        except (discord.Forbidden, discord.NotFound, discord.HTTPException):
+            pass
+
+    async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
+        await ctx.message.add_reaction('❌')
+        await ctx.send_help(ctx.command)
 
 
-# SETUP
-def setup(bot: commands.Bot):
+def setup(bot: commands.Bot) -> None:
+    """
+    Sets up the cog.
+
+    :param bot: The bot, to which the cog is being added.
+    :type bot: commands.Bot
+    :return: Nothing.
+    :rtype: None
+    """
     bot.add_cog(Utilities(bot))
