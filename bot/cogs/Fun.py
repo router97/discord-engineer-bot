@@ -11,6 +11,7 @@ from random import choice
 
 import discord
 from discord.ext import commands
+from discord import app_commands
 from faker import Faker
 
 from core.bot import setup_activity
@@ -88,7 +89,7 @@ class Fun(commands.Cog):
         """
         await ctx.reply(choice(self.RANDOM_REPLIES))
 
-    @commands.command(name='do', description='Change the presence of the bot.')
+    @commands.hybrid_command(name='do', description='Change the presence of the bot.')
     async def do(
             self,
             ctx: commands.Context,
@@ -116,8 +117,10 @@ class Fun(commands.Cog):
             ephemeral=True,
             silent=True,
         )
+        await ctx.message.delete(delay=60.0)
 
     async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
+        await ctx.message.add_reaction('❌')
         await ctx.send_help(ctx.command)
 
 

@@ -6,6 +6,7 @@ This cog module contains mostly commands that display information about somethin
 For example, displaying information about a certain user or a guild.
 """
 import unicodedata
+import datetime
 from typing import Optional
 
 import discord
@@ -129,7 +130,7 @@ class Info(commands.Cog):
             allowed_mentions=discord.AllowedMentions.none(),
         )
         try:
-            await ctx.message.delete()
+            await ctx.message.delete(delay=60.0)
         except (discord.Forbidden, discord.NotFound, discord.HTTPException):
             pass
 
@@ -182,7 +183,7 @@ class Info(commands.Cog):
             allowed_mentions=discord.AllowedMentions.none(),
         )
         try:
-            await ctx.message.delete()
+            await ctx.message.delete(delay=60.0)
         except (discord.Forbidden, discord.NotFound, discord.HTTPException):
             pass
 
@@ -225,11 +226,11 @@ class Info(commands.Cog):
             allowed_mentions=discord.AllowedMentions.none(),
         )
         try:
-            await ctx.message.delete()
+            await ctx.message.delete(delay=60.0)
         except (discord.Forbidden, discord.NotFound, discord.HTTPException):
             pass
 
-    @commands.hybrid_command(name="emote", description="Display information about an emote.")
+    @commands.hybrid_command(name="emote", description="Display information about an emote")
     async def emote(
             self,
             ctx: commands.Context,
@@ -280,9 +281,55 @@ class Info(commands.Cog):
             allowed_mentions=discord.AllowedMentions.none(),
         )
         try:
-            await ctx.message.delete()
+            await ctx.message.delete(delay=60.0)
         except (discord.Forbidden, discord.NotFound, discord.HTTPException):
             pass
+
+    @commands.hybrid_command(name='links', description='Display links related to the bot')
+    async def links(
+            self,
+            ctx: commands.Context,
+    ) -> None:
+        """
+        Replies with an embed, containing information about an emote(or character).
+
+        :param ctx: The context in which the command is invoked.
+        :type ctx: commands.Context
+        :return: None. The function only sends a Discord message, doesn't return anything in the code.
+        :rtype: None
+        """
+        embed: discord.Embed = discord.Embed(
+            color=discord.Color.teal(),
+            title='Engineer',
+            timestamp=datetime.datetime.now(),
+        )
+        embed.set_author(
+            name=f"{ctx.bot.application.owner.display_name} (ID: {ctx.bot.application.owner.id})",
+            icon_url=ctx.bot.application.owner.display_avatar.url,
+            url=f"https://discord.com/users/{ctx.bot.application.owner.id}",
+        )
+        embed.add_field(name='GitHub', value='[Repository](https://github.com/router97/discord-engineer-bot)')
+        embed.add_field(name='Discord Server', value='[Invite](https://discord.gg/vz28BWYsab)')
+
+        if ctx.bot.user.display_avatar:
+            embed.set_thumbnail(url=ctx.bot.user.display_avatar.url)
+        embed.set_footer(text='Bot made by Nortex25(router97)')
+
+        await ctx.reply(
+            embed=embed,
+            silent=True,
+            ephemeral=True,
+            delete_after=60.0,
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
+        try:
+            await ctx.message.delete(delay=60.0)
+        except (discord.Forbidden, discord.NotFound, discord.HTTPException):
+            pass
+
+    async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
+        await ctx.message.add_reaction('❌')
+        await ctx.send_help(ctx.command)
 
 
 async def user_info_context_menu_callback(interaction: discord.Interaction, user: discord.Member) -> None:
