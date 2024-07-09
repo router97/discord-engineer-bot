@@ -6,7 +6,6 @@ and stores it in it's **bot** variable.
 """
 
 from typing import Optional
-import importlib.metadata
 
 from discord import Intents, Activity, ActivityType, Status
 from discord.ext import commands
@@ -15,10 +14,9 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from bot import __version__
 from .config import COMMAND_PREFIX
 from .help_command import CustomHelpCommand
-
-project_version: str = importlib.metadata.version('discord-engineer-bot')
 
 # Configure bot intents
 intents = Intents.default()
@@ -49,7 +47,7 @@ async def setup_activity(name: Optional[str] = '.help') -> None:
     activity = Activity(
         name=name,
         type=ActivityType.playing,
-        state=f'⚙️ v{project_version}',
+        state=f'⚙️ v{__version__}',
         url='https://discord.com/oauth2/authorize?client_id=1167747112465858580',
     )
     await bot.change_presence(activity=activity, status=Status.online)
