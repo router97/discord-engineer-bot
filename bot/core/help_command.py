@@ -4,7 +4,7 @@ This module contains the logic behind the help command.
 import discord
 from discord.ext import commands
 
-from config import COMMAND_PREFIX
+from .config import COMMAND_PREFIX
 
 
 class SendBotHelpSelect(discord.ui.Select):

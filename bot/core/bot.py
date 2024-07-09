@@ -12,9 +12,7 @@ from discord.ext import commands
 
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from bot import __version__
 from .config import COMMAND_PREFIX
 from .help_command import CustomHelpCommand
 
@@ -41,6 +39,7 @@ async def setup_activity(name: Optional[str] = '.help') -> None:
     :return: The function changes the bot's presence, doesn't return anything in the code.
     :rtype: None
     """
+    from bot import __version__
     if len(name) > 128:
         name: str = name[:125] + "..."
 
