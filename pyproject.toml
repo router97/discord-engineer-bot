@@ -1,11 +1,32 @@
 [tool.poetry]
+package-mode = false
 name = "discord-engineer-bot"
 version = "0.1.0"
 description = "A small Discord bot with some games and utilities."
-authors = ["router97"]
 license = "MIT"
+authors = [
+    "router97 <router97.dev@gmail.com>",
+]
+maintainers = [
+    "router97 <router97.dev@gmail.com>",
+]
 readme = "README.md"
-package-mode = false
+homepage = "https://github.com/router97/discord-engineer-bot"
+repository = "https://github.com/router97/discord-engineer-bot"
+documentation = "https://github.com/router97/discord-engineer-bot/wiki"
+keywords = ["discord", "bot", "games", "utilities", "discord.py"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Communications :: Chat",
+    "Topic :: Games/Entertainment",
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -14,13 +35,13 @@ asyncpg = "^0.29.0"
 python-dotenv = "^1.0.1"
 langcodes = "^3.4.0"
 googletrans = "3.1.0a0"
-faker = "^25.9.1"
 numerize = "^0.12"
-django = "^5.0.6"
-django-mptt = "^0.16.0"
-psycopg2-binary = "^2.9.9"
-
+faker = "^26.0.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[project.urls]
+"Bug Tracker" = "https://github.com/router97/discord-engineer-bot/issues"
+"Source Code" = "https://github.com/router97/discord-engineer-bot"
