@@ -1,0 +1,6 @@
+**
+
+!bot
+!.env
+!poetry.lock
+!pyproject.toml
