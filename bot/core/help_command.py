@@ -1,6 +1,3 @@
-"""
-This module contains the logic behind the help command.
-"""
 import discord
 from discord.ext import commands
 
@@ -8,18 +5,7 @@ from .config import COMMAND_PREFIX
 
 
 class SendBotHelpSelect(discord.ui.Select):
-    """
-    A select menu for the send_bot_help method, which provides help for the selected cog.
-    """
     def __init__(self, help_command: commands.HelpCommand, cogs: list[commands.Cog]) -> None:
-        """
-        Initializes the select menu.
-
-        :param help_command: The help command.
-        :type help_command: commands.HelpCommand
-        :param cogs: A list of cogs to select from.
-        :type cogs: list[commands.Cog]
-        """
         self.help_command: commands.HelpCommand = help_command
         self.cog_name_mapping: dict[str, commands.Cog] = {cog.qualified_name: cog for cog in cogs}
 
@@ -36,14 +22,6 @@ class SendBotHelpSelect(discord.ui.Select):
         )
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        """
-        Callback function for the select menu. Is called when an item is selected
-
-        :param interaction: The interaction.
-        :type interaction: discord.Interaction
-        :return: Nothing. Sends the help command for the cog selected.
-        :rtype: None
-        """
         await interaction.response.defer()
 
         picked_cog: commands.Cog = self.cog_name_mapping[self.values[0]]
@@ -52,19 +30,7 @@ class SendBotHelpSelect(discord.ui.Select):
 
 
 class SendBotHelpView(discord.ui.View):
-    """
-    The view for the send_bot_help method.
-    Has a select menu in which you can select a cog to view its help command.
-    """
     def __init__(self, help_command: commands.HelpCommand, cogs: list[commands.Cog]) -> None:
-        """
-        Initializes the view.
-
-        :param help_command: The help command.
-        :type help_command: commands.HelpCommand
-        :param cogs: A list of cogs to select from. (for the select menu)
-        :type cogs: list[commands.Cog]
-        """
         super().__init__()
         self.add_item(SendBotHelpSelect(help_command, cogs))
 

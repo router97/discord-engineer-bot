@@ -14,7 +14,7 @@ from discord.ext import commands
 from discord import app_commands
 from faker import Faker
 
-from core.bot import setup_activity
+from  core.bot import setup_activity
 
 faker = Faker()
 
