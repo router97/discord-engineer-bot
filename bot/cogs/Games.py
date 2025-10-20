@@ -101,7 +101,7 @@ class Games(commands.Cog):
             view=view,
         )
 
-    @commands.hybrid_command(name="rr", description="A simple russian roulette game.", aliases=['russianroulette'])
+    @commands.hybrid_command(name="rr", description="Russian roulette", aliases=['russianroulette'])
     async def rr(self, ctx: commands.Context,
                  member: discord.Member = commands.parameter(
                      converter=commands.MemberConverter,
@@ -110,29 +110,21 @@ class Games(commands.Cog):
                      displayed_default='Bot',
                      displayed_name='Opponent'
                  )) -> None:
-        """
-        A simple russian roulette game.
-        """
-
-        # Default opponent to bot if none is provided
         if member is None:
             member = ctx.bot.user
 
-        # Check if the user is trying to play with themselves
         if ctx.author == member:
             await ctx.reply(
-                content="Yeah, I wonder who'd win.",
+                content="???",
                 delete_after=60.0,
                 ephemeral=True,
                 silent=True,
             )
             return
 
-        # Set up message components
-        view: RussianRouletteView = RussianRouletteView(user1=ctx.author, user2=member)
+        view: RussianRouletteView = RussianRouletteView(ctx.author, member)
         embed: discord.Embed = await view.setup_embed()
 
-        # Send the message
         await ctx.reply(
             embed=embed,
             view=view,
