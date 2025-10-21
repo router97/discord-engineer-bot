@@ -1,7 +1,7 @@
 import time
 import datetime
 from enum import Enum
-from random import randint
+from random import randint, shuffle
 from asyncio import sleep
 
 import discord
@@ -29,6 +29,7 @@ class Revolver:
         self.size = size
         self.__cylinder = [Round.LIVE for _ in range(live_rounds)]
         self.__cylinder.extend([Round.EMPTY for _ in range(size - live_rounds)])
+        shuffle(self.__cylinder)
         self.current_position = 0
 
     
@@ -58,7 +59,7 @@ class RussianRouletteView(discord.ui.View):
     EMPTY_SYMBOL = '◯'
     SPENT_SYMBOL = '⦸'
 
-    def __init__(self, user1: discord.Member, user2: discord.Member) -> None:
+    def __init__(self, user1: discord.Member, user2: discord.Member, extreme: bool = False) -> None:
         super().__init__()
         self.player1: discord.Member = user1
         self.player2: discord.Member = user2
@@ -69,21 +70,22 @@ class RussianRouletteView(discord.ui.View):
         self.history = []
 
         self.revolver: Revolver = Revolver()
+        self.extreme = extreme
     
     
     async def setup_embed(self, embed_to_update: discord.Embed = None) -> discord.Embed:
         if embed_to_update is None:
             embed: discord.Embed = discord.Embed(
-                color=discord.Color.red(),
-                title='Russian Roulette',
+                color=discord.Color.red() if not self.extreme else discord.Color.dark_gray(),
+                title='Russian Roulette' if not self.extreme else 'RUSSIAN ROULETTE (EXTREME)',
                 description=f'{self.player1.mention} and {self.player2.mention}.',
                 timestamp=datetime.datetime.now(),
             )
             embed.add_field(name='Holding the gun:', value=self.player_active.mention)
-            embed.add_field(name='Actions taken', value='')
+            embed.add_field(name='Actions taken:', value=' | '.join(self.history))
             return embed
         
-        embed_to_update.set_field_at(1, name='Actions taken', value=self.history)
+        embed_to_update.set_field_at(1, name='Actions taken:', value=' | '.join(self.history))
         embed_to_update.set_field_at(0, name='Holding the gun:', value=self.player_active.mention)
         return embed_to_update
             
@@ -116,6 +118,7 @@ class RussianRouletteView(discord.ui.View):
             new_embed: discord.Embed = await self.setup_embed(current_embed)
             for child in self.children:
                 child.disabled = True
+            await self.player_active.timeout(datetime.timedelta(seconds=10))
         
         elif round_shot == Round.EMPTY:
             self.history.append('Fired(EMPTY)')
@@ -175,14 +178,15 @@ class RussianRouletteView(discord.ui.View):
         await interaction.message.edit(embed=new_embed, view=self)
 
 
-    @discord.ui.button(
-        label='check',
-        custom_id='button_check',
-        style=discord.ButtonStyle.success,
-        row=0,
-    )
-    async def button_check_callback(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        await interaction.response.send_message(self.revolver.give_cylinder())
+
+# @discord.ui.button(
+#     label='check',
+#     custom_id='button_check',
+#     style=discord.ButtonStyle.success,
+#     row=0,
+# )
+# async def button_check_callback(self, interaction: discord.Interaction, button: discord.Button) -> None:
+#     await interaction.response.send_message(self.revolver.give_cylinder())
 
 
 # if self.player_active.id == interaction.client.user.id:

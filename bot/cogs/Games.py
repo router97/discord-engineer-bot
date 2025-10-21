@@ -1,11 +1,3 @@
-"""
-Games
-=====
-
-This cog module contains some simple message-based games
-using message components like embeds and buttons.
-"""
-
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -13,17 +5,11 @@ from discord.ext import commands
 from views.Games.TicTacToe import TicTacToeView
 from views.Games.RockPaperScissors import RockPaperScissorsView
 from views.Games.RussianRoulette import RussianRouletteView
+from views.Games.BuckshotRoulette import BuckshotRouletteView
 
 
 class Games(commands.Cog):
-    """
-    Some simple message-based games, using message components like: embeds, buttons.
-    """
-
     def __init__(self, bot: commands.Bot) -> None:
-        """
-        Doc
-        """
         self.bot = bot
 
     @commands.hybrid_command(name="ttt", description="A simple Tic-tac-toe game.", aliases=['tictactoe', 'tic-tac-toe'])
@@ -109,7 +95,8 @@ class Games(commands.Cog):
                      description="The user you want to play against.",
                      displayed_default='Bot',
                      displayed_name='Opponent'
-                 )) -> None:
+                 ),
+                 extreme: str = 'no') -> None:
         if member is None:
             member = ctx.bot.user
 
@@ -121,8 +108,8 @@ class Games(commands.Cog):
                 silent=True,
             )
             return
-
-        view: RussianRouletteView = RussianRouletteView(ctx.author, member)
+        extreme_converted = True if extreme=='extreme' else False
+        view: RussianRouletteView = RussianRouletteView(ctx.author, member, extreme=extreme_converted)
         embed: discord.Embed = await view.setup_embed()
 
         await ctx.reply(
@@ -130,10 +117,45 @@ class Games(commands.Cog):
             view=view,
             allowed_mentions=discord.AllowedMentions(users=[ctx.author, member]),
         )
+    
+    @commands.hybrid_command(name="buckshot", description="Buckshot Roulette", aliases=['buckshotroulette'])
+    async def buckshot(
+        self,
+        ctx: commands.Context,
+        players: commands.Greedy[discord.Member] = commands.parameter(
+            description='Players',
+            displayed_name='Players',
+        ),
+        *,
+        extreme: str = None
+        ) -> None:
+        extreme_converted = True if extreme=='extreme' else False
+        players_including_author = list(players)
+        players_including_author.append(ctx.author)
 
-    async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
-        await ctx.message.add_reaction('❌')
-        await ctx.send_help(ctx.command)
+        players_cleaned_up = list(set(players_including_author))
+
+        if len(players_cleaned_up) < 2:
+            await ctx.reply(
+                content="Need at least 2 players",
+                delete_after=60.0,
+                ephemeral=True,
+                silent=True,
+            )
+            return
+
+        view: BuckshotRouletteView = BuckshotRouletteView(players_cleaned_up, extreme)
+        embed: discord.Embed = await view.setup_lobby_embed()
+
+        await ctx.reply(
+            embed=embed,
+            view=view,
+        )
+
+
+    # async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
+    #     await ctx.message.add_reaction('❌')
+    #     await ctx.send_help(ctx.command)
 
 
 async def ttt_context_menu_callback(interaction: discord.Interaction, member: discord.Member) -> None:
