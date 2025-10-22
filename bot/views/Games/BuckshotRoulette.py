@@ -355,17 +355,15 @@ class BuckshotRouletteGameView(discord.ui.View):
 
         sawed_off = self.shotgun.sawed_off
         shell: Shell = self.shotgun.fire()
-        if shell == Shell.LIVE:
-            self.set_next_player()
+        if shell == Shell.LIVE: 
             if not sawed_off:
-                print('damaged with unsawed')
                 self.health_points[target_position] -= 1
             else:
-                print('damaged with sawed')
                 if self.health_points[target_position] >= 3:
                     self.health_points[target_position] -= 2
                 else:
                     self.health_points[target_position] = 0
+            self.set_next_player()
         elif shell == Shell.BLANK:
             if player_id != target_id:
                 self.set_next_player()
