@@ -545,11 +545,11 @@ class UseItemSelect(discord.ui.Select):
         if Item(int(self.values[0])) == Item.MAGNIFYING_GLASS:
             next_shell = self.original_view.shotgun.check_next_shell()
             magnifying_glass_embed = discord.Embed(
-                title='LIVE...',
+                title=f'{next_shell.name}...',
                 color=discord.Color.red() if next_shell == Shell.LIVE else discord.Color.light_gray(),
             ).set_image(url=self.BLANK_SHELL_IMAGE_URL if next_shell == Shell.BLANK else self.LIVE_SHELL_IMAGE_URL)
             
-            await interaction.response.send_message(embed=magnifying_glass_embed, ephemeral=True)
+            await interaction.response.send_message(embed=magnifying_glass_embed, ephemeral=True)   
 
         elif Item(int(self.values[0])) == Item.BEER:
             ejected_shell = self.original_view.shotgun.fire()
