@@ -1,17 +1,20 @@
-import time
 import datetime
 from enum import Enum
 from random import randint, shuffle, choice
-from asyncio import sleep, create_task
+from asyncio import create_task
 
 import discord
 
-def ordinal(x):
+#todo: .sg зробить боту возможность самому проигрывать музыку и звуки бакшот рулет если игроки сидят в войсе
+
+def ordinal(x: int) -> str:
     ordinals = [
         "first", "second", "third", "fourth", "fifth",
         "sixth", "seventh", "eighth", "ninth", "tenth",
-        "eleventh", "twelfth"]
+        "eleventh", "twelfth"
+        ]
     return ordinals[x-1]
+
 
 class Shell(Enum):
     BLANK = 0
@@ -19,16 +22,16 @@ class Shell(Enum):
 
 
 class Item(Enum):
-    BEER = 0 #DONE
-    # ADRENALINE = 1 #WILL NEED A VIEW OF ITS OWN
-    INVERTER = 2 #DONE
-    # JAMMER = 3 #WILL NEED GAME VIEW MODIFICATION
+    BEER = 0
+    ADRENALINE = 1
+    INVERTER = 2
+    # JAMMER = 3 #EQUIVALENT TO HANDCUFFS
 
-    MAGNIFYING_GLASS = 4 #DONE
+    MAGNIFYING_GLASS = 4
     BURNER_PHONE = 5
 
-    # HANDSAW = 6 #WILL NEED GAME VIEW MODIFICATION
-    # HANDCUFFS = 7 #WILL NEED GAME VIEW MODIFICATION
+    HANDSAW = 6 
+    HANDCUFFS = 7
 
     CIGARETTES = 8
     EXPIRED_MEDICINE = 9
@@ -38,9 +41,10 @@ class Item(Enum):
 
 class Shotgun:
     def __init__(self) -> None:
-        self.sawed_off = False
+        self.sawed_off: bool = False
+        self.__magazine: list[Shell] = []
     
-    def load(self, blanks: int, lives: int):
+    def load(self, blanks: int, lives: int) -> None:
         self.sawed_off = False
         self.__magazine = [Shell.LIVE for _ in range(lives)]
         self.__magazine.extend([Shell.BLANK for _ in range(blanks)])
@@ -50,89 +54,91 @@ class Shotgun:
         self.sawed_off = False
         self.__magazine = []
     
-    def shells_left(self) -> int:
-        return len(self.__magazine)
-    
     def fire(self) -> Shell:
-        if self.shells_left() > 0:
-            fired_round = self.__magazine.pop(0)
-            self.sawed_off = False
-            return fired_round
-        
-        raise Exception("Cannot fire.")
+        if not self.check_shells_left() > 0:
+            raise Exception("Can't fire shotgun. No shells left")
+    
+        fired_round: Shell = self.__magazine.pop(0)
+        self.sawed_off = False
+        return fired_round
+
+    def check_shells_left(self) -> int:
+        return len(self.__magazine)
     
     def check_next_shell(self) -> Shell:
         return self.__magazine[0]
     
     def check_random_shell(self) -> tuple[Shell, int] | tuple[None, None]:
-        shells_left = self.shells_left()
+        shells_left = self.check_shells_left()
+
         if shells_left < 2:
             return None, None
         
-        position = randint(1, shells_left-1)
+        position = randint(1, shells_left - 1)
         return self.__magazine[position], position+1
     
     def invert_current_shell(self) -> None:
-        current_shell = self.__magazine[0]
-        if current_shell == Shell.BLANK:
-            self.__magazine[0] = Shell.LIVE
-            return
-        self.__magazine[0] = Shell.BLANK
+        self.__magazine[0] = Shell.BLANK if self.__magazine[0] == Shell.LIVE else Shell.LIVE
 
 
-class BuckshotRouletteView(discord.ui.View):
-
+class BuckshotRouletteLobbyView(discord.ui.View):
     def __init__(self, players: list[discord.Member], extreme: bool = False) -> None:
         super().__init__()
-        self.players: list[discord.Member] = players
-        self.current_player: int = 0
-        self.players_ready: list[int] = []
-
+        self.players = players
         self.extreme = extreme
 
+        self.players_ready_ids: list[int] = []
 
-    async def setup_lobby_embed(self) -> discord.Embed:
+    async def setup_embed(self) -> discord.Embed:
         all_players_ids = [player.id for player in self.players]
         not_ready_players = all_players_ids
-        for player_id in self.players_ready:
+        for player_id in self.players_ready_ids:
             not_ready_players.remove(player_id)
 
         embed: discord.Embed = discord.Embed(
-            color=discord.Color.dark_gray(),
-            title='Buckshot Roulette' if not self.extreme else 'BUCKSHOT ROULETTE (EXTREME)',
-            description="Waiting for players...",
+            color=discord.Color.dark_gray() if not self.extreme else discord.Color.red(),
+            title='GENERAL RELEASE OF LIABILITY' if not self.extreme else 'GENERAL RELEASE OF LIABILITY+',
+            description=f"""This General Release ("Release") is made on {datetime.datetime.now().day}.{datetime.datetime.now().month}.{datetime.datetime.now().year} between ████████ at ████████████████████████████████ ("Releasor") and ████████ at ████████████████████████ ("Releasee").
+
+1. Releasor and anyone claiming on Releasor's behalf releases and forever discharges Releasees and its affiliates, successors, officers, employees, representatives, partners, agents and anyone claiming through them (collectively, the "Released Parties") in their individual and/or corporate capacities from any and all claims, liabilities, obligations, promises, agreements, disputes, demands, damages, causes of action of any nature and kind, known or unknown, which Releasor has or ever had or may in the future have against Releasees or any of the Released Parties arising out of or relating to: the termination of a contractual relationship between the Releasor and the Releasee ("Claims").
+
+2. In exchange for the release of Claims, Releasee will provide Releasor a payment in the amount of $10,000.00. In consideration of such payment, Releasor agrees to accept the payment as full and complete settlement and satisfaction of any present and prospective claims.
+
+3. This Release shall not be in any way construed as an admission by the Releasee that it has acted wrongfully with respect to Releasor or any other preson, that it admits liability or responsibility at any time for any purpose, or that Releasor has any rights whatsoever against the Releasee.
+
+4. This release shall be binding upon the parties and their respective heirs, administrators, personal representatives, executors, successors and assigns. Releasor has the authority to release the Claims and has not assigned or transferred any Claims to any other party. The provisions of this Release are severable. If any provision is held to be invalid or unenforceable, it shall not affect the validity or enforceability of any other provision. This Release constitutes the entire agreement between the parties and supersedes any and all prior oral or written agreements or understandings between the
+""",
             timestamp=datetime.datetime.now(),
         )
-        embed.add_field(name='Ready', value=" | ".join(['<@' + str(player_id) + '>' for player_id in self.players_ready]))
-        embed.add_field(name='Not Ready', value=" | ".join(['<@' + str(player_id) + '>' for player_id in not_ready_players]))
+        embed.add_field(name='Signed', value=" | ".join(['<@' + str(player_id) + '>' for player_id in self.players_ready_ids]))
+        embed.add_field(name='Not Signed', value=" | ".join(['<@' + str(player_id) + '>' for player_id in not_ready_players]))
         return embed
 
     async def setup_game(self, interaction: discord.Interaction) -> None:
-        
         game_view = BuckshotRouletteGameView(self.players, self.extreme, interaction.channel)
-        embed = await game_view.setup_game_embed()
+        embed = await game_view.setup_embed()
         message = await interaction.channel.send(embed=embed, view=game_view)
         game_view.message = message
     
     @discord.ui.button(
-        label='Ready',
+        label='Sign',
         custom_id='button_ready',
-        style=discord.ButtonStyle.success,
+        style=discord.ButtonStyle.danger,
         row=0,
-        emoji='✅'
+        emoji='🖊️'
     )
     async def button_ready_callback(self, interaction: discord.Interaction, button: discord.Button) -> None:
         if interaction.user.id not in [player.id for player in self.players]:
             return
-        if interaction.user.id in self.players_ready:
+        if interaction.user.id in self.players_ready_ids:
             return
         
         await interaction.response.defer()
 
-        self.players_ready.append(interaction.user.id)
-        new_embed = await self.setup_lobby_embed()
+        self.players_ready_ids.append(interaction.user.id)
+        new_embed = await self.setup_embed()
 
-        if len(self.players_ready) == len(self.players):
+        if len(self.players_ready_ids) == len(self.players):
             await interaction.message.reply('all players are ready')
             button.disabled = True
             await self.setup_game(interaction)
@@ -142,30 +148,13 @@ class BuckshotRouletteView(discord.ui.View):
         await interaction.message.edit(embed=new_embed, view=self)
 
 
-class PlayerSelect(discord.ui.Select):
-    def __init__(self, players: list[tuple[str, int]], original_view: BuckshotRouletteGameView, shooter_id: int):
-        options = [
-            discord.SelectOption(label=player, value=player_id) for player, player_id in players
-            ]
-        super().__init__(placeholder="Who to shoot?", options=options)
-        self.shooter_id = shooter_id
-        self.original_view = original_view
-    
-    async def callback(self, interaction: discord.Interaction):
-        if interaction.user.id != self.shooter_id:
-            await interaction.response.send_message('Not your turn.', ephemeral=True)
-            return
-        
-        await self.original_view.shoot_player(interaction.user.id, int(self.values[0]))
-        await interaction.message.delete(delay=1)
-        
-class PlayerSelectView(discord.ui.View):
-    def __init__(self, players: list[tuple[str, int]], original_view: BuckshotRouletteGameView, shooter_id: int):
-        super().__init__()
-        self.add_item(PlayerSelect(players, original_view, shooter_id))
-
-
 class BuckshotRouletteGameView(discord.ui.View):
+    LIVE_SHELL_CASING_TOP: str = '🟥'
+    LIVE_SHELL_CASING_BOTTOM: str = '🟥'
+    BLANK_SHELL_CASING_TOP: str = '⬜'
+    BLANK_SHELL_CASING_BOTTOM: str = '⬜'
+    SHELL_PRIMER: str = '🟨'
+    EMPTY_SYMBOL: str = '⠀'
 
     def __init__(self, players: list[discord.Member], extreme: bool, channel: discord.TextChannel) -> None:
         super().__init__()
@@ -175,12 +164,14 @@ class BuckshotRouletteGameView(discord.ui.View):
         self.history: list[str] = []
         self.inventory: dict[int, list[Item]] = {}
         self.health_points: dict[int, int] = {}
+        self.skipping_turn: dict[int, bool] = {}
+        self.handcuff_delay: dict[int, int] = {}
 
 
         self.message: discord.Message = None
         self.channel: discord.TextChannel = channel
         
-        self.base_hp = 1
+        self.base_hp = 4
         for i in range(len(self.players)):
             self.health_points[i] = self.base_hp
 
@@ -190,12 +181,15 @@ class BuckshotRouletteGameView(discord.ui.View):
         self.shotgun.load(self.shells_blank, self.shells_live)
         self.extreme = extreme
 
-        create_task(self.channel.send('GAME START', delete_after=10))
-        create_task(self.channel.send(f"{self.shells_live} LIVE", delete_after=10))
-        create_task(self.channel.send(f"{self.shells_blank} BLANK", delete_after=10))
+        shell_text = self.generate_shells_text()
+        embed = discord.Embed(
+            description=shell_text
+        )
+        create_task(self.channel.send(embed=embed, delete_after=10))
+        
 
         self.max_inventory_size: int = 8
-        amount_of_items = 4
+        amount_of_items = 3
         available_items = list(Item)
         for i in range(len(self.players)):
             if not self.inventory.get(i):
@@ -203,33 +197,28 @@ class BuckshotRouletteGameView(discord.ui.View):
             items_picked_up = []
             item_selection = [choice(available_items) for _ in range(amount_of_items)]
             for item in item_selection:
-                if len(self.inventory[i]) == 8:
+                if len(self.inventory[i]) == self.max_inventory_size:
                     break
                 self.inventory[i].append(item)
                 items_picked_up.append(item)
-            
-            player_inventory_formatted_count = {}
-            for item in items_picked_up:
-                if player_inventory_formatted_count.get(item):
-                    player_inventory_formatted_count[item] += 1
-                    continue
-                player_inventory_formatted_count[item] = 1
-            player_inventory_formatted: list[tuple[str, int]] = []
-            for item, count in player_inventory_formatted_count.items():
-                player_inventory_formatted.append((f"{item.name} x{count}", item.value))
-            
-            string_formatted = f"{self.players[i].mention} PICKED UP\n"
-            for item_string, item_id in player_inventory_formatted:
-                string_formatted += item_string + ' '
-
-            create_task(self.channel.send(string_formatted, delete_after=5))
     
+    def generate_shells_text(self):
+        first_line = ((self.LIVE_SHELL_CASING_TOP + self.EMPTY_SYMBOL) * self.shells_live) + ((self.BLANK_SHELL_CASING_TOP + self.EMPTY_SYMBOL) * self.shells_blank)
+        second_line = ((self.LIVE_SHELL_CASING_BOTTOM + self.EMPTY_SYMBOL) * self.shells_live) + ((self.BLANK_SHELL_CASING_BOTTOM + self.EMPTY_SYMBOL) * self.shells_blank)
+        last_line = (self.SHELL_PRIMER + self.EMPTY_SYMBOL) * (self.shells_blank + self.shells_live)
+        return f'{first_line}\n{second_line}\n{last_line}'
+
     def reset_game(self) -> None:
         self.shells_live = randint(1, 4)
         self.shells_blank = randint(1, 4)
+        shell_text = self.generate_shells_text()
+        embed = discord.Embed(
+            description=shell_text
+        )
+        create_task(self.channel.send(embed=embed, delete_after=10))
         self.shotgun.load(self.shells_blank, self.shells_live)
 
-        amount_of_items = 4
+        amount_of_items = 3
         available_items = list(Item)
         for i in range(len(self.players)):
             if not self.inventory.get(i):
@@ -241,74 +230,14 @@ class BuckshotRouletteGameView(discord.ui.View):
                     break
                 self.inventory[i].append(item)
                 items_picked_up.append(item)
-            
-            player_inventory_formatted_count = {}
-            for item in items_picked_up:
-                if player_inventory_formatted_count.get(item):
-                    player_inventory_formatted_count[item] += 1
-                    continue
-                player_inventory_formatted_count[item] = 1
-            player_inventory_formatted: list[tuple[str, int]] = []
-            for item, count in player_inventory_formatted_count.items():
-                player_inventory_formatted.append((f"{item.name} x{count}", item.value))
-            
-            string_formatted = f"{self.players[i].mention} PICKED UP\n"
-            for item_string, item_id in player_inventory_formatted:
-                string_formatted += item_string + ' '
-
-            create_task(self.channel.send(string_formatted, delete_after=5))
     
-    def set_next_player(self) -> None:
-        amount_of_players = len(self.players)
-        complete = False
-        current_position = self.current_player
-        initial_position = self.current_player
-        if self.rotation == 'forward':
-            while not complete:
-                current_position = self.rotate_forward_number(current_position)
-                if self.health_points[current_position] > 0:
-                    complete = True
-                elif initial_position == current_position:
-                    return
-        elif self.rotation == 'backwards':
-            while not complete:
-                current_position = self.rotate_backwards_number(current_position)
-                if self.health_points[current_position] > 0:
-                    complete = True
-                elif initial_position == current_position:
-                    return
-        self.history = []
-        self.current_player = current_position
-        create_task(self.channel.send(f'{self.players[self.current_player].mention} NOW HAS THE GUN.', delete_after=10))
-    
-    def rotate_forward_number(self, current_position):
-        if current_position == len(self.players)-1:
-            return 0
-        else:
-            return current_position + 1
-    
-    def rotate_backwards_number(self, current_position):
-        if current_position == 0:
-            return len(self.players)-1
-        else:
-            return current_position - 1
-        
-    def get_current_player_id(self) -> int:
-        return self.players[self.current_player].id
-
-    def get_player_id_by_position(self, position: int) -> int:
-        return self.players[position].id
-    
-    def get_player_position_by_id(self, player_id: int) -> int:
-        players_ids = [player.id for player in self.players]
-        return players_ids.index(player_id)
-
-    def know_next_player(self) -> int | tuple[int, bool]:
+    def know_next_player(self) -> tuple[int, bool]:
         
         amount_of_players: int = len(self.players)
         current_position: int = self.current_player
         initial_position: int = self.current_player
         eligible_players: list[int] = []
+        complete = False
 
         for player, health in self.health_points.items():
             if health > 0:
@@ -331,25 +260,93 @@ class BuckshotRouletteGameView(discord.ui.View):
                         print('looping')
             
             return (current_position, True)
-
+        
+        ignoring_positions = []
         if self.rotation == 'forward':
-            while True:
+            while not complete:
                 current_position = self.rotate_forward_number(current_position)
-                if self.health_points[current_position] > 0:
-                    break
-                if initial_position == current_position:
-                    raise Exception('zero players left')
+                if self.health_points[current_position] > 0 and current_position not in ignoring_positions:
+                    if self.skipping_turn.get(current_position, False):
+                        print(f'REALIZED {current_position} is skipping their turn')
+                        ignoring_positions.append(current_position)
+                        continue
+                    
+                    complete = True
         elif self.rotation == 'backwards':
-            while True:
+            while not complete:
                 current_position = self.rotate_backwards_number(current_position)
-                if self.health_points[current_position] > 0:
-                    break
-                if initial_position == current_position:
-                    raise Exception('Zero players left')
+                if self.health_points[current_position] > 0 and current_position not in ignoring_positions:
+                    if self.skipping_turn.get(current_position, False):
+                        print(f'REALIZED {current_position} is skipping their turn.')
+                        ignoring_positions.append(current_position)
+                        continue
+                    complete = True
         
         return current_position, False
 
-    async def shoot_player(self, player_id: int, target_id: int):
+    def set_next_player(self) -> None:
+        amount_of_players = len(self.players)
+        for player in self.handcuff_delay.keys():
+            if not self.handcuff_delay.get(player, 0):
+                continue
+            self.handcuff_delay[player] -= 1
+
+        complete = False
+        current_position = self.current_player
+        initial_position = self.current_player
+        ignoring_positions = []
+
+        if self.rotation == 'forward':
+            while not complete:
+                current_position = self.rotate_forward_number(current_position)
+                if self.health_points[current_position] > 0 and current_position not in ignoring_positions:
+                    if self.skipping_turn.get(current_position, False):
+                        print(f'REALIZED {current_position} is skipping their turn. now they wont')
+                        ignoring_positions.append(current_position)
+                        self.skipping_turn[current_position] = False
+                        # create_task(self.channel.send(f'{self.players[current_position].mention} IS SKIPPING THEIR TURN...', delete_after=10))
+                        continue
+                    
+                    complete = True
+                    
+        elif self.rotation == 'backwards':
+            while not complete:
+                current_position = self.rotate_backwards_number(current_position)
+                if self.health_points[current_position] > 0 and current_position not in ignoring_positions:
+                    if self.skipping_turn.get(current_position, False):
+                        print(f'REALIZED {current_position} is skipping their turn. now they wont')
+                        ignoring_positions.append(current_position)
+                        self.skipping_turn[current_position] = False
+                        # create_task(self.channel.send(f'{self.players[current_position].mention} IS SKIPPING THEIR TURN...', delete_after=10))
+                        continue
+                    complete = True
+        
+        self.current_player = current_position
+        create_task(self.channel.send(f'{self.players[self.current_player].mention} NOW HAS THE GUN.', delete_after=10))
+    
+    def rotate_forward_number(self, current_position: int) -> int:
+        if current_position == len(self.players)-1:
+            return 0
+        else:
+            return current_position + 1
+    
+    def rotate_backwards_number(self, current_position: int) -> int:
+        if current_position == 0:
+            return len(self.players)-1
+        else:
+            return current_position - 1
+        
+    def get_current_player_id(self) -> int:
+        return self.players[self.current_player].id
+
+    def get_player_id_by_position(self, position: int) -> int:
+        return self.players[position].id
+    
+    def get_player_position_by_id(self, player_id: int) -> int:
+        players_ids = [player.id for player in self.players]
+        return players_ids.index(player_id)
+
+    async def shoot_player(self, player_id: int, target_id: int) -> None:
         players_ids = [player.id for player in self.players]
         player_position = players_ids.index(player_id)
         target_position = players_ids.index(target_id)
@@ -359,33 +356,35 @@ class BuckshotRouletteGameView(discord.ui.View):
         sawed_off = self.shotgun.sawed_off
         shell: Shell = self.shotgun.fire()
         if shell == Shell.LIVE:
+            self.set_next_player()
             if not sawed_off:
+                print('damaged with unsawed')
                 self.health_points[target_position] -= 1
             else:
+                print('damaged with sawed')
                 if self.health_points[target_position] >= 3:
                     self.health_points[target_position] -= 2
                 else:
                     self.health_points[target_position] = 0
-            self.set_next_player()
-        if shell == Shell.BLANK:
+        elif shell == Shell.BLANK:
             if player_id != target_id:
                 self.set_next_player()
 
         await self.message.channel.send(f'{player.mention} SHOT {target.mention} WITH A {shell.name}', delete_after=10.0)
-        new_embed = await self.setup_game_embed()
+        new_embed = await self.setup_embed()
         if self.health_points[target_position] == 0:
             await self.message.channel.send(f'{self.players[target_position].mention} IS OUT...', delete_after=10.0)
             if self.extreme:
                 await self.punish_player(target_position)
         await self.message.edit(view=self, embed=new_embed)
     
-    async def punish_player(self, player_position: int):
+    async def punish_player(self, player_position: int) -> None:
         try:
             await self.players[player_position].timeout(datetime.timedelta(seconds=10))
         except:
             await self.channel.send(f"COULDN'T PUNISH {self.players[player_position]}...")
 
-    async def setup_game_embed(self, embed_to_update: discord.Embed = None) -> discord.Embed:
+    async def setup_embed(self, embed_to_update: discord.Embed = None) -> discord.Embed:
         next_up, one_player_left = self.know_next_player()
 
         if one_player_left:
@@ -405,11 +404,8 @@ class BuckshotRouletteGameView(discord.ui.View):
             
             
         
-        if self.shotgun.shells_left() == 0:
+        if self.shotgun.check_shells_left() == 0:
             self.reset_game()
-            await self.channel.send('NEW ROUND', delete_after=10)
-            await self.channel.send(f"{self.shells_live} LIVE", delete_after=10)
-            await self.channel.send(f"{self.shells_blank} BLANK", delete_after=10)
             embed_to_update = None
         
         if embed_to_update is None:
@@ -431,7 +427,6 @@ class BuckshotRouletteGameView(discord.ui.View):
         embed_to_update.set_field_at(2, name='Next up:', value=self.players[next_up].mention + f'⚡x{self.health_points[next_up]}')
         return embed_to_update
 
-    
     @discord.ui.button(
         label='Shoot',
         custom_id='button_shoot',
@@ -452,8 +447,7 @@ class BuckshotRouletteGameView(discord.ui.View):
         eligible_players_data = [(self.players[player].display_name, self.players[player].id) for player in eligible_players]
         eligible_players_data.insert(0, ('Yourself', interaction.user.id))
 
-        await interaction.response.send_message(view=PlayerSelectView(eligible_players_data, self, interaction.user.id), delete_after=15)
-
+        await interaction.response.send_message(view=ShootView(eligible_players_data, self, interaction.user.id), delete_after=15, ephemeral=True)
 
     @discord.ui.button(
         label='Use item',
@@ -470,9 +464,8 @@ class BuckshotRouletteGameView(discord.ui.View):
         if not player_inventory:
             await interaction.response.send_message('No items left', ephemeral=True)
             return
-        view = InventoryView(self)
+        view = UseItemView(self)
         await interaction.response.send_message(view=view, delete_after=15)
-
 
     @discord.ui.button(
         label='View Inventory',
@@ -482,12 +475,45 @@ class BuckshotRouletteGameView(discord.ui.View):
         emoji='🔍'
     )
     async def button_view_inventory_callback(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        view = InventoryViewView(self)
+        view = InventoryView(self)
         await interaction.response.send_message(view=view, ephemeral=True)
-        
 
-class InventorySelect(discord.ui.Select):
-    def __init__(self, original_view: BuckshotRouletteGameView):
+
+class ShootView(discord.ui.View):
+    def __init__(self, players: list[tuple[str, int]], original_view: BuckshotRouletteGameView, shooter_id: int):
+        super().__init__()
+        self.add_item(ShootSelect(players, original_view, shooter_id))
+
+
+class ShootSelect(discord.ui.Select):
+    def __init__(self, players: list[tuple[str, int]], original_view: BuckshotRouletteGameView, shooter_id: int):
+        options = [
+            discord.SelectOption(label=player, value=player_id) for player, player_id in players
+            ]
+        super().__init__(placeholder="Who to shoot?", options=options)
+        self.shooter_id = shooter_id
+        self.original_view = original_view
+    
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user.id != self.shooter_id:
+            await interaction.response.send_message('Not your turn.', ephemeral=True)
+            return
+        
+        await self.original_view.shoot_player(interaction.user.id, int(self.values[0]))
+        await interaction.message.delete(delay=1)
+
+
+class UseItemView(discord.ui.View):
+    def __init__(self, original_view: BuckshotRouletteGameView) -> None:
+        super().__init__()
+        self.add_item(UseItemSelect(original_view))
+
+
+class UseItemSelect(discord.ui.Select):
+    LIVE_SHELL_IMAGE_URL = 'https://media.discordapp.net/attachments/1430510977840971786/1430511076751183923/latest.png?ex=68fa0ac2&is=68f8b942&hm=424717e30a469fe9376e390370b3c8d504960fc10cd6352bc3238ade6e44b3ff&=&format=webp&quality=lossless&width=731&height=731'
+    BLANK_SHELL_IMAGE_URL = 'https://media.discordapp.net/attachments/1430510977840971786/1430511061131460719/latest.png?ex=68fa0abe&is=68f8b93e&hm=254ee2986c4666887a6f41dabbbafdc92d73dd756051abe2d60f36e017208bf1&=&format=webp&quality=lossless&width=731&height=731'
+
+    def __init__(self, original_view: BuckshotRouletteGameView) -> None:
         player_inventory: list[Item] = original_view.inventory[original_view.current_player]
         player_inventory_formatted_count = {}
         for item in player_inventory:
@@ -505,7 +531,7 @@ class InventorySelect(discord.ui.Select):
         super().__init__(placeholder="Choose an item", options=options)
         self.original_view = original_view
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         if interaction.user.id != self.original_view.players[self.original_view.current_player].id:
             await interaction.response.send_message('Not your turn.', ephemeral=True)
             return
@@ -517,7 +543,13 @@ class InventorySelect(discord.ui.Select):
         await self.original_view.channel.send(f"{interaction.user.mention} USED {Item(int(self.values[0])).name}", delete_after=10)
 
         if Item(int(self.values[0])) == Item.MAGNIFYING_GLASS:
-            await interaction.response.send_message(f'{self.original_view.shotgun.check_next_shell().name}...', ephemeral=True)
+            next_shell = self.original_view.shotgun.check_next_shell()
+            magnifying_glass_embed = discord.Embed(
+                title='LIVE...',
+                color=discord.Color.red() if next_shell == Shell.LIVE else discord.Color.light_gray(),
+            ).set_image(url=self.BLANK_SHELL_IMAGE_URL if next_shell == Shell.BLANK else self.LIVE_SHELL_IMAGE_URL)
+            
+            await interaction.response.send_message(embed=magnifying_glass_embed, ephemeral=True)
 
         elif Item(int(self.values[0])) == Item.BEER:
             ejected_shell = self.original_view.shotgun.fire()
@@ -564,34 +596,46 @@ class InventorySelect(discord.ui.Select):
             shell, position = self.original_view.shotgun.check_random_shell()
             if not shell and not position:
                 await interaction.response.send_message(f'HOW UNFORTUNATE...', ephemeral=True)
-            
-            await interaction.response.send_message(f'{ordinal(position).upper()} SHELL... {shell.name.upper()}...', ephemeral=True)
+            else:
+                await interaction.response.send_message(f'{ordinal(position).upper()} SHELL... {shell.name.upper()}...', ephemeral=True)
         
         elif Item(int(self.values[0])) == Item.REMOTE:
             self.original_view.rotation = 'backwards' if self.original_view.rotation == 'forward' else 'forward'
             await interaction.response.send_message(f'NOW WE GO {self.original_view.rotation.upper()}', delete_after=10)
+        
+        elif Item(int(self.values[0])) == Item.HANDSAW:
+            self.original_view.shotgun.sawed_off = True
 
+        elif Item(int(self.values[0])) == Item.HANDCUFFS:
+            if self.original_view.handcuff_delay.get(self.original_view.current_player, 0):
+                await interaction.response.send_message('CANNOT USE HANDCUFFS. (you lost them regardless)', delete_after=10, ephemeral=True)
+            else:
+                await interaction.response.send_message(view=HandcuffsView(self.original_view), delete_after=10, ephemeral=True)
+                self.original_view.handcuff_delay[self.original_view.current_player] = 2
+        
+        elif Item(int(self.values[0])) == Item.ADRENALINE:
+            await interaction.response.send_message(view=AdrenalineView(self.original_view), delete_after=10, ephemeral=True)
 
-        embed = await self.original_view.setup_game_embed()
+        embed = await self.original_view.setup_embed()
         await self.original_view.message.edit(embed=embed)
         await interaction.message.delete()
 
+
 class InventoryView(discord.ui.View):
-    def __init__(self, original_view) -> None:
+    def __init__(self, original_view: BuckshotRouletteGameView) -> None:
         super().__init__()
         self.add_item(InventorySelect(original_view))
 
 
-
-class InventoryViewSelect(discord.ui.Select):
-    def __init__(self, original_view: BuckshotRouletteGameView):
+class InventorySelect(discord.ui.Select):
+    def __init__(self, original_view: BuckshotRouletteGameView) -> None:
         options = [
             discord.SelectOption(label=player.display_name, value=player.id) for player in original_view.players
             ]
         super().__init__(placeholder="Check Inventory", options=options)
         self.original_view = original_view
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction) -> None:
         player_inventory: list[Item] = self.original_view.inventory[self.original_view.get_player_position_by_id(int(self.values[0]))]
         player_inventory_formatted_count = {}
         for item in player_inventory:
@@ -609,7 +653,99 @@ class InventoryViewSelect(discord.ui.Select):
         
         await interaction.response.send_message(string_formatted, ephemeral=True)
 
-class InventoryViewView(discord.ui.View):
-    def __init__(self, original_view) -> None:
+
+class HandcuffsView(discord.ui.View):
+    def __init__(self, original_view: BuckshotRouletteGameView) -> None:
         super().__init__()
-        self.add_item(InventoryViewSelect(original_view))
+        self.add_item(HandcuffsSelect(original_view))
+
+
+class HandcuffsSelect(discord.ui.Select):
+    def __init__(self, original_view: BuckshotRouletteGameView) -> None:
+        current_player_id = original_view.get_player_id_by_position(original_view.current_player)
+        players_excluding_current = [player for player in original_view.players if player.id != current_player_id]
+        options = [
+            discord.SelectOption(label=player.display_name, value=original_view.get_player_position_by_id(int(player.id))) for player in players_excluding_current
+            ]
+        super().__init__(placeholder="Use handcuffs on", options=options)
+        self.original_view = original_view
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        if interaction.user.id != self.original_view.get_current_player_id():
+            await interaction.response.send_message('Not your turn.', ephemeral=True)
+            return
+        
+        await self.use(int(self.values[0]))
+        await interaction.message.delete(delay=1)
+    
+    async def use(self, target_position: int) -> None:
+        self.original_view.skipping_turn[target_position] = True
+        await self.original_view.channel.send(f'USED HANDCUFFS ON {self.original_view.players[target_position].mention}.', delete_after=10)
+        old_embed = self.original_view.message.embeds[0]
+        new_embed = await self.original_view.setup_embed(old_embed)
+        await self.original_view.message.edit(embed=new_embed)
+
+
+class AdrenalineView(discord.ui.View):
+    def __init__(self, original_view: BuckshotRouletteGameView) -> None:
+        super().__init__()
+        self.add_item(AdrenalineSelect(original_view))
+
+
+class AdrenalineSelect(discord.ui.Select):
+    def __init__(self, original_view: BuckshotRouletteGameView) -> None:
+        available_inventories: dict[int, list[Item]] = {}
+        for player in original_view.players:
+            player_position = original_view.get_player_position_by_id(player.id)
+            if not original_view.inventory.get(player_position, []):
+                continue
+
+            if player_position == original_view.current_player:
+                continue
+            
+            if original_view.health_points[player_position] == 0:
+                continue
+            
+            available_inventory = [item for item in original_view.inventory[player_position] if item != Item.ADRENALINE]
+            if not available_inventory:
+                continue
+            available_inventories[player_position] = available_inventory
+
+        available_inventories_formatted = []
+        for player_position, inventory in available_inventories.items():
+            owner_name = original_view.players[player_position].display_name
+            player_inventory_formatted_count = {}
+            for item in inventory:
+                if player_inventory_formatted_count.get(item):
+                    player_inventory_formatted_count[item] += 1
+                    continue
+                player_inventory_formatted_count[item] = 1
+
+            for item, count in player_inventory_formatted_count.items():
+                available_inventories_formatted.append((f"{owner_name} || {item.name} x{count}", f"{player_position}|{item.value}"))
+
+        options = [
+            discord.SelectOption(label=item_name, value=item_value) for item_name, item_value in available_inventories_formatted
+            ]
+        super().__init__(placeholder="Steal an item", options=options)
+        self.original_view = original_view 
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        if interaction.user.id != self.original_view.get_current_player_id():
+            await interaction.response.send_message('Not your turn.', ephemeral=True)
+            return
+        
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        owner_of_stolen_item_position = int(self.values[0].split("|")[0])
+        used_item_id = int(self.values[0].split("|")[1])
+
+        owner_inventory: list[Item] = self.original_view.inventory[owner_of_stolen_item_position].copy()
+        owner_inventory.remove(Item(int(used_item_id)))
+        self.original_view.inventory[owner_of_stolen_item_position] = owner_inventory
+
+        player_inventory: list[Item] = self.original_view.inventory[self.original_view.current_player].copy()
+        player_inventory.append(Item(int(used_item_id)))
+        self.original_view.inventory[self.original_view.current_player] = player_inventory
+        
+        await self.original_view.channel.send(f"{interaction.user.mention} STOLE {Item(int(used_item_id)).name} FROM {self.original_view.players[owner_of_stolen_item_position].mention}.", delete_after=10)
+        await interaction.response.defer(ephemeral=True)

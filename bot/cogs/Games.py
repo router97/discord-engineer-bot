@@ -5,7 +5,7 @@ from discord.ext import commands
 from views.Games.TicTacToe import TicTacToeView
 from views.Games.RockPaperScissors import RockPaperScissorsView
 from views.Games.RussianRoulette import RussianRouletteView
-from views.Games.BuckshotRoulette import BuckshotRouletteView
+from views.Games.BuckshotRoulette import BuckshotRouletteLobbyView
 
 
 class Games(commands.Cog):
@@ -144,8 +144,8 @@ class Games(commands.Cog):
             )
             return
 
-        view: BuckshotRouletteView = BuckshotRouletteView(players_cleaned_up, extreme)
-        embed: discord.Embed = await view.setup_lobby_embed()
+        view: BuckshotRouletteLobbyView = BuckshotRouletteLobbyView(players_cleaned_up, extreme_converted)
+        embed: discord.Embed = await view.setup_embed()
 
         await ctx.reply(
             embed=embed,
@@ -236,10 +236,6 @@ async def rr_context_menu_callback(interaction: discord.Interaction, member: dis
 
 
 def setup(bot: commands.Bot):
-    """
-    Doc
-    """
-
     bot.add_cog(Games(bot))
 
     ttt_context_menu = app_commands.ContextMenu(
@@ -253,7 +249,7 @@ def setup(bot: commands.Bot):
         callback=rps_context_menu_callback,
     )
     bot.tree.add_command(rps_context_menu)
-
+    
     rr_context_menu = app_commands.ContextMenu(
         name='Russian Roulette',
         callback=rr_context_menu_callback,
