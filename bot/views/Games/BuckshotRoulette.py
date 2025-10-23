@@ -5,7 +5,6 @@ from asyncio import create_task
 
 import discord
 
-#todo: .sg зробить боту возможность самому проигрывать музыку и звуки бакшот рулет если игроки сидят в войсе
 
 def ordinal(x: int) -> str:
     ordinals = [
@@ -25,7 +24,6 @@ class Item(Enum):
     BEER = 0
     ADRENALINE = 1
     INVERTER = 2
-    # JAMMER = 3 #EQUIVALENT TO HANDCUFFS
 
     MAGNIFYING_GLASS = 4
     BURNER_PHONE = 5
@@ -82,6 +80,36 @@ class Shotgun:
 
 
 class BuckshotRouletteLobbyView(discord.ui.View):
+    GENERAL_RELEASE_OF_LIABILITY_TEMPLATE: str = """This General Release ("Release") is made on {day} day of {month}, {year} between ████████ at ████████████████████████████████ ("Releasor") and ████████ at ████████████████████████ ("Releasee").
+
+1. Releasor and anyone claiming on Releasor's behalf releases and forever discharges Releasee and its affiliates, successors, officers, employees, representatives, partners, agents and anyone claiming through them (collectively, the “Released Parties”), in their individual and/or corporate capacities from any and all claims, liabilities, obligations, promises, agreements, disputes, demands, damages, causes of action of any nature and kind, known or unknown, which Releasor has or ever had or may in the future have against Releasee or any of the Released Parties arising out of or relating to: the termination of a contractual relationship between the Releasor and the Releasee (“Claims”).
+
+2. In exchange for the release of Claims, Releasee will provide Releasor a payment in the amount of $00,000.00. In consideration of such payment, Releasor agrees to accept the payment as full and complete settlement and satisfaction of any present and prospective claims.
+
+3. This Release shall not be in any way construed as an admission by the Releasee that it has acted wrongfully with respect to Releasor or any other person, that it admits liability or responsibility at any time for any purpose, or that Releasor has any rights whatsoever against the Releasee.
+
+4. This Release shall be binding upon the parties and their respective heirs, administrators, personal representatives, executors, successors and assigns. Releasor has the authority to release the Claims and has not assigned or transferred any Claims to any other party. The provisions of this Release are severable. If any provision is held to be invalid or unenforceable, it shall not affect the validity or enforceability of any other provision. This Release constitutes the entire agreement between the parties and supersedes any and all prior oral or written agreements or understandings between the parties concerning the subject matter of this Release. This Release may not be altered, amended or modified, except by a written document signed by both parties. The terms of this Release shall be governed by and construed in accordance with the laws of the State of ████████.
+"""
+    DENY_PLAYER_MESSAGES: list[str] = [
+        "You are not part of the contract. *breaks pen angrily*",
+        "You are not part of the contract. *breaks pen aggressively*",
+        "You are not part of the contract. *breaks pen very aggressively*",
+        "You are not part of the contract. *eats pen hungrily*",
+        "You are not part of the contract. *takes your pen gently*",
+        "You are not part of the uh.. The contract or whatever *does nothing passively*",
+        "You are not part of the contract. *[sample text]*",
+        "You are not part of the contract. *throws up*",
+        "You are not part of the contract. *shits yourself*",
+        "You are not part of... Uhm... You can't sign this.. I think *remembers forgetfully*",
+        "Don't even try. *glares at you glaringly*",
+        "Nope.",
+        "Nah.",
+        "No way.",
+        "Uh, no.",
+        "Heck no.",
+        "Allright sign here and... Hold up... Something's not right...",
+        ]
+
     def __init__(self, players: list[discord.Member], extreme: bool = False) -> None:
         super().__init__()
         self.players = players
@@ -94,20 +122,15 @@ class BuckshotRouletteLobbyView(discord.ui.View):
         not_ready_players = all_players_ids
         for player_id in self.players_ready_ids:
             not_ready_players.remove(player_id)
-
+        current_datetime = datetime.datetime.now()
         embed: discord.Embed = discord.Embed(
-            color=discord.Color.dark_gray() if not self.extreme else discord.Color.red(),
-            title='GENERAL RELEASE OF LIABILITY' if not self.extreme else 'GENERAL RELEASE OF LIABILITY+',
-            description=f"""This General Release ("Release") is made on {datetime.datetime.now().day}.{datetime.datetime.now().month}.{datetime.datetime.now().year} between ████████ at ████████████████████████████████ ("Releasor") and ████████ at ████████████████████████ ("Releasee").
-
-1. Releasor and anyone claiming on Releasor's behalf releases and forever discharges Releasees and its affiliates, successors, officers, employees, representatives, partners, agents and anyone claiming through them (collectively, the "Released Parties") in their individual and/or corporate capacities from any and all claims, liabilities, obligations, promises, agreements, disputes, demands, damages, causes of action of any nature and kind, known or unknown, which Releasor has or ever had or may in the future have against Releasees or any of the Released Parties arising out of or relating to: the termination of a contractual relationship between the Releasor and the Releasee ("Claims").
-
-2. In exchange for the release of Claims, Releasee will provide Releasor a payment in the amount of $10,000.00. In consideration of such payment, Releasor agrees to accept the payment as full and complete settlement and satisfaction of any present and prospective claims.
-
-3. This Release shall not be in any way construed as an admission by the Releasee that it has acted wrongfully with respect to Releasor or any other preson, that it admits liability or responsibility at any time for any purpose, or that Releasor has any rights whatsoever against the Releasee.
-
-4. This release shall be binding upon the parties and their respective heirs, administrators, personal representatives, executors, successors and assigns. Releasor has the authority to release the Claims and has not assigned or transferred any Claims to any other party. The provisions of this Release are severable. If any provision is held to be invalid or unenforceable, it shall not affect the validity or enforceability of any other provision. This Release constitutes the entire agreement between the parties and supersedes any and all prior oral or written agreements or understandings between the
-""",
+            color=discord.Color.light_gray(),
+            title='GENERAL RELEASE OF LIABILITY',
+            description=self.GENERAL_RELEASE_OF_LIABILITY_TEMPLATE.format(
+                day=current_datetime.day,
+                month=current_datetime.strftime("%B"),
+                year=current_datetime.year
+                ),
             timestamp=datetime.datetime.now(),
         )
         embed.add_field(name='Signed', value=" | ".join(['<@' + str(player_id) + '>' for player_id in self.players_ready_ids]))
@@ -116,39 +139,48 @@ class BuckshotRouletteLobbyView(discord.ui.View):
 
     async def setup_game(self, interaction: discord.Interaction) -> None:
         game_view = BuckshotRouletteGameView(self.players, self.extreme, interaction.channel)
+
         embed = await game_view.setup_embed()
+        await interaction.response.defer()
         message = await interaction.channel.send(embed=embed, view=game_view)
+
+        # TODO NO
         game_view.message = message
+
+        await interaction.message.delete()
+
     
     @discord.ui.button(
-        label='Sign',
-        custom_id='button_ready',
-        style=discord.ButtonStyle.danger,
-        row=0,
-        emoji='🖊️'
+        label = 'Sign',
+        custom_id = 'button_ready',
+        style = discord.ButtonStyle.danger,
+        emoji = '🖊️',
+        row = 0
     )
     async def button_ready_callback(self, interaction: discord.Interaction, button: discord.Button) -> None:
         if interaction.user.id not in [player.id for player in self.players]:
-            return
-        if interaction.user.id in self.players_ready_ids:
+            await interaction.response.send_message(choice(self.DENY_PLAYER_MESSAGES), ephemeral=True, delete_after=15)
             return
         
-        await interaction.response.defer()
+        if interaction.user.id in self.players_ready_ids:
+            await interaction.response.defer()
+            return
 
         self.players_ready_ids.append(interaction.user.id)
         new_embed = await self.setup_embed()
 
-        if len(self.players_ready_ids) == len(self.players):
-            await interaction.message.reply('all players are ready')
-            button.disabled = True
-            await self.setup_game(interaction)
-            await interaction.message.delete()
+        if len(self.players_ready_ids) != len(self.players):
+            await interaction.response.edit_message(embed=new_embed, view=self)
             return
-
-        await interaction.message.edit(embed=new_embed, view=self)
+        
+        await self.setup_game(interaction)
 
 
 class BuckshotRouletteGameView(discord.ui.View):
+    NOT_PLAYERS_TURN_MESSAGES: list[str] = ['Not your turn.',
+                                            'Nope.',
+                                            'Not yet.'
+                                            ]
     LIVE_SHELL_CASING_TOP: str = '🟥'
     LIVE_SHELL_CASING_BOTTOM: str = '🟥'
     BLANK_SHELL_CASING_TOP: str = '⬜'
@@ -166,9 +198,8 @@ class BuckshotRouletteGameView(discord.ui.View):
         self.health_points: dict[int, int] = {}
         self.skipping_turn: dict[int, bool] = {}
         self.handcuff_delay: dict[int, int] = {}
+        self.message = None
 
-
-        self.message: discord.Message = None
         self.channel: discord.TextChannel = channel
         
         self.base_hp = 4
@@ -250,14 +281,14 @@ class BuckshotRouletteGameView(discord.ui.View):
                         break
                     current_position = self.rotate_forward_number(current_position)
                     if initial_position == current_position:
-                        print('looping')
+                        raise Exception("something's wrong with calculating who the next player is")
             elif self.rotation == 'backwards':
                 while True:
                     if self.health_points[current_position] > 0:
                         break
                     current_position = self.rotate_backwards_number(current_position)
                     if initial_position == current_position:
-                        print('looping')
+                        raise Exception("something's wrong with calculating who the next player is")
             
             return (current_position, True)
         
@@ -267,7 +298,6 @@ class BuckshotRouletteGameView(discord.ui.View):
                 current_position = self.rotate_forward_number(current_position)
                 if self.health_points[current_position] > 0 and current_position not in ignoring_positions:
                     if self.skipping_turn.get(current_position, False):
-                        print(f'REALIZED {current_position} is skipping their turn')
                         ignoring_positions.append(current_position)
                         continue
                     
@@ -277,7 +307,6 @@ class BuckshotRouletteGameView(discord.ui.View):
                 current_position = self.rotate_backwards_number(current_position)
                 if self.health_points[current_position] > 0 and current_position not in ignoring_positions:
                     if self.skipping_turn.get(current_position, False):
-                        print(f'REALIZED {current_position} is skipping their turn.')
                         ignoring_positions.append(current_position)
                         continue
                     complete = True
@@ -301,12 +330,9 @@ class BuckshotRouletteGameView(discord.ui.View):
                 current_position = self.rotate_forward_number(current_position)
                 if self.health_points[current_position] > 0 and current_position not in ignoring_positions:
                     if self.skipping_turn.get(current_position, False):
-                        print(f'REALIZED {current_position} is skipping their turn. now they wont')
                         ignoring_positions.append(current_position)
                         self.skipping_turn[current_position] = False
-                        # create_task(self.channel.send(f'{self.players[current_position].mention} IS SKIPPING THEIR TURN...', delete_after=10))
                         continue
-                    
                     complete = True
                     
         elif self.rotation == 'backwards':
@@ -314,10 +340,8 @@ class BuckshotRouletteGameView(discord.ui.View):
                 current_position = self.rotate_backwards_number(current_position)
                 if self.health_points[current_position] > 0 and current_position not in ignoring_positions:
                     if self.skipping_turn.get(current_position, False):
-                        print(f'REALIZED {current_position} is skipping their turn. now they wont')
                         ignoring_positions.append(current_position)
                         self.skipping_turn[current_position] = False
-                        # create_task(self.channel.send(f'{self.players[current_position].mention} IS SKIPPING THEIR TURN...', delete_after=10))
                         continue
                     complete = True
         
@@ -368,10 +392,11 @@ class BuckshotRouletteGameView(discord.ui.View):
             if player_id != target_id:
                 self.set_next_player()
 
-        await self.message.channel.send(f'{player.mention} SHOT {target.mention} WITH A {shell.name}', delete_after=10.0)
+        await self.channel.send(f'{player.mention} SHOT {target.mention} WITH A {shell.name}', delete_after=10.0)
+
         new_embed = await self.setup_embed()
         if self.health_points[target_position] == 0:
-            await self.message.channel.send(f'{self.players[target_position].mention} IS OUT...', delete_after=10.0)
+            await self.channel.send(f'{self.players[target_position].mention} IS OUT...', delete_after=10.0)
             if self.extreme:
                 await self.punish_player(target_position)
         await self.message.edit(view=self, embed=new_embed)
@@ -380,7 +405,7 @@ class BuckshotRouletteGameView(discord.ui.View):
         try:
             await self.players[player_position].timeout(datetime.timedelta(seconds=10))
         except:
-            await self.channel.send(f"COULDN'T PUNISH {self.players[player_position]}...")
+            await self.channel.send(f"COULDN'T PUNISH {self.players[player_position]}...", delete_after=20)
 
     async def setup_embed(self, embed_to_update: discord.Embed = None) -> discord.Embed:
         next_up, one_player_left = self.know_next_player()
@@ -394,36 +419,31 @@ class BuckshotRouletteGameView(discord.ui.View):
                 timestamp=datetime.datetime.now(),
             )
             embed.add_field(name='Won the game', value=self.players[next_up].mention)
-            for child in self.children:
-                child.disabled = True
-            await self.channel.send(f"{self.players[next_up].mention} WON", delete_after=10)
-            
+
+            self.clear_items().stop()
+
+            await self.channel.send(f"{self.players[next_up].mention} WON", delete_after=30)
             return embed
-            
-            
         
         if self.shotgun.check_shells_left() == 0:
             self.reset_game()
             embed_to_update = None
         
-        if embed_to_update is None:
-            name_list = [member.mention + f"⚡x{self.health_points[self.get_player_position_by_id(member.id)]}" for member in self.players]
-            embed: discord.Embed = discord.Embed(
-                color=discord.Color.red() if not self.extreme else discord.Color.dark_gray(),
-                title='Buckshot Roulette' if not self.extreme else 'BUCKSHOT ROULETTE (EXTREME)',
-                description="\n".join(name_list),
-                timestamp=datetime.datetime.now(),
-            )
-            embed.add_field(name='Holding the shotgun:', value=self.players[self.current_player].mention + f'⚡x{self.health_points[self.current_player]}')
-            embed.add_field(name='Actions taken:', value='\n'.join(self.history))
-            embed.add_field(name='Next up:', value=self.players[next_up].mention + f'⚡x{self.health_points[next_up]}')
-            embed.set_footer(text=f"Direction: {self.rotation}")
-            return embed
-        
-        embed_to_update.set_field_at(1, name='Actions taken:', value=' | '.join(self.history))
-        embed_to_update.set_field_at(0, name='Holding the shotgun:', value=self.players[self.current_player].mention + f'⚡x{self.health_points[self.current_player]}')
-        embed_to_update.set_field_at(2, name='Next up:', value=self.players[next_up].mention + f'⚡x{self.health_points[next_up]}')
-        return embed_to_update
+        if embed_to_update:
+            embed_to_update.set_field_at(0, name='Holding the shotgun:', value=self.players[self.current_player].mention + f'⚡x{self.health_points[self.current_player]}')
+            embed_to_update.set_field_at(1, name='Next up:', value=self.players[next_up].mention + f'⚡x{self.health_points[next_up]}')
+            return embed_to_update
+        name_list = [member.mention + f"⚡x{self.health_points[self.get_player_position_by_id(member.id)]}" for member in self.players]
+        embed: discord.Embed = discord.Embed(
+            color=discord.Color.red() if not self.extreme else discord.Color.dark_gray(),
+            title='Buckshot Roulette' if not self.extreme else 'BUCKSHOT ROULETTE (EXTREME)',
+            description="\n".join(name_list),
+            timestamp=datetime.datetime.now(),
+        )
+        embed.add_field(name='Holding the shotgun:', value=self.players[self.current_player].mention + f'⚡x{self.health_points[self.current_player]}')
+        embed.add_field(name='Next up:', value=self.players[next_up].mention + f'⚡x{self.health_points[next_up]}')
+        embed.set_footer(text=f"Direction: {self.rotation}")
+        return embed
 
     @discord.ui.button(
         label='Shoot',
@@ -433,8 +453,9 @@ class BuckshotRouletteGameView(discord.ui.View):
     )
     async def button_shoot_callback(self, interaction: discord.Interaction, button: discord.Button) -> None:
         if interaction.user.id != self.players[self.current_player].id:
-            await interaction.response.send_message('Not your turn.', ephemeral=True)
+            await interaction.response.send_message(choice(self.NOT_PLAYERS_TURN_MESSAGES), ephemeral=True, delete_after=10)
             return
+        
         eligible_players: list[int] = []
 
         for player, health in self.health_points.items():
@@ -445,25 +466,27 @@ class BuckshotRouletteGameView(discord.ui.View):
         eligible_players_data = [(self.players[player].display_name, self.players[player].id) for player in eligible_players]
         eligible_players_data.insert(0, ('Yourself', interaction.user.id))
 
-        await interaction.response.send_message(view=ShootView(eligible_players_data, self, interaction.user.id), delete_after=15, ephemeral=True)
+        await interaction.response.send_message(view=ShootView(eligible_players_data, self, interaction.user.id), ephemeral=True, delete_after=20)
 
     @discord.ui.button(
-        label='Use item',
+        label='Use Item',
         custom_id='button_use_item',
         style=discord.ButtonStyle.primary,
         row=0,
     )
     async def button_use_item_callback(self, interaction: discord.Interaction, button: discord.Button) -> None:
         if interaction.user.id != self.players[self.current_player].id:
-            await interaction.response.send_message('Not your turn.', ephemeral=True)
+            await interaction.response.send_message(choice(self.NOT_PLAYERS_TURN_MESSAGES), ephemeral=True, delete_after=10)
             return
         
         player_inventory: list[Item] = self.inventory[self.current_player]
+
         if not player_inventory:
-            await interaction.response.send_message('No items left', ephemeral=True)
+            await interaction.response.send_message('no items left(', ephemeral=True, delete_after=10)
             return
+        
         view = UseItemView(self)
-        await interaction.response.send_message(view=view, delete_after=15)
+        await interaction.response.send_message(view=view, ephemeral=True, delete_after=20)
 
     @discord.ui.button(
         label='View Inventory',
@@ -474,7 +497,16 @@ class BuckshotRouletteGameView(discord.ui.View):
     )
     async def button_view_inventory_callback(self, interaction: discord.Interaction, button: discord.Button) -> None:
         view = InventoryView(self)
-        await interaction.response.send_message(view=view, ephemeral=True)
+        await interaction.response.send_message(view=view, ephemeral=True, delete_after=20)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if not await super().interaction_check(interaction):
+            return False
+
+        if interaction.user not in self.players:
+            return False
+        
+        return True
 
 
 class ShootView(discord.ui.View):
@@ -494,11 +526,11 @@ class ShootSelect(discord.ui.Select):
     
     async def callback(self, interaction: discord.Interaction):
         if interaction.user.id != self.shooter_id:
-            await interaction.response.send_message('Not your turn.', ephemeral=True)
+            await interaction.response.send_message(choice(self.original_view.NOT_PLAYERS_TURN_MESSAGES), ephemeral=True, delete_after=10)
             return
         
+        await interaction.response.defer(ephemeral=True)
         await self.original_view.shoot_player(interaction.user.id, int(self.values[0]))
-        await interaction.message.delete(delay=1)
 
 
 class UseItemView(discord.ui.View):
@@ -616,7 +648,7 @@ class UseItemSelect(discord.ui.Select):
 
         embed = await self.original_view.setup_embed()
         await self.original_view.message.edit(embed=embed)
-        await interaction.message.delete()
+        # await interaction.message.delete()
 
 
 class InventoryView(discord.ui.View):
@@ -725,6 +757,10 @@ class AdrenalineSelect(discord.ui.Select):
         options = [
             discord.SelectOption(label=item_name, value=item_value) for item_name, item_value in available_inventories_formatted
             ]
+        
+        if not options:
+            options = [discord.SelectOption(label='CONGRATS ON WASTING THE ITEM! nothing to steal', value='None')]
+        
         super().__init__(placeholder="Steal an item", options=options)
         self.original_view = original_view 
 
@@ -733,7 +769,11 @@ class AdrenalineSelect(discord.ui.Select):
             await interaction.response.send_message('Not your turn.', ephemeral=True)
             return
         
-        await interaction.response.defer(thinking=True, ephemeral=True)
+        if self.values[0] == 'Nothing':
+            await interaction.response.send_message("stole NOTHING from NO ONE", ephemeral=True, delete_after=10)
+        await interaction.response.defer(ephemeral=True)
+
+
         owner_of_stolen_item_position = int(self.values[0].split("|")[0])
         used_item_id = int(self.values[0].split("|")[1])
 
@@ -746,4 +786,3 @@ class AdrenalineSelect(discord.ui.Select):
         self.original_view.inventory[self.original_view.current_player] = player_inventory
         
         await self.original_view.channel.send(f"{interaction.user.mention} STOLE {Item(int(used_item_id)).name} FROM {self.original_view.players[owner_of_stolen_item_position].mention}.", delete_after=10)
-        await interaction.response.defer(ephemeral=True)
