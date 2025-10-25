@@ -143,14 +143,11 @@ class Games(commands.Cog):
                 silent=True,
             )
             return
-
-        view: BuckshotRouletteLobbyView = BuckshotRouletteLobbyView(players_cleaned_up, extreme_converted)
-        embed: discord.Embed = await view.setup_embed()
-
-        await ctx.reply(
-            embed=embed,
-            view=view,
+        
+        message = await ctx.reply(
+            embed=discord.Embed(title='Placeholder')
         )
+        BuckshotRouletteLobbyView(message, players_cleaned_up, extreme_converted)
 
 
     # async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:

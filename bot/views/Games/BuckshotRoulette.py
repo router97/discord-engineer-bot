@@ -2,6 +2,7 @@ import datetime
 from enum import Enum
 from random import randint, shuffle, choice
 from asyncio import create_task
+import asyncio
 
 import discord
 
@@ -109,47 +110,92 @@ class BuckshotRouletteLobbyView(discord.ui.View):
         "Heck no.",
         "Allright sign here and... Hold up... Something's not right...",
         ]
+    EMBED_TITLE = 'GENERAL RELEASE OF LIABILITY'
+    EMBED_COLOR = discord.Color.light_gray()
 
-    def __init__(self, players: list[discord.Member], extreme: bool = False) -> None:
+    def __init__(self, message: discord.Message, players: list[discord.Member], extreme: bool = False) -> None:
         super().__init__()
         self.players = players
         self.extreme = extreme
+        self.message = message
 
-        self.players_ready_ids: list[int] = []
+        self.no_more_players_event = asyncio.Event()
+        self.player_queue = asyncio.Queue()
+        self.__players_ready = []
+        self.created_at = datetime.datetime.now()
 
-    async def setup_embed(self) -> discord.Embed:
-        all_players_ids = [player.id for player in self.players]
-        not_ready_players = all_players_ids
-        for player_id in self.players_ready_ids:
-            not_ready_players.remove(player_id)
-        current_datetime = datetime.datetime.now()
-        embed: discord.Embed = discord.Embed(
-            color=discord.Color.light_gray(),
-            title='GENERAL RELEASE OF LIABILITY',
-            description=self.GENERAL_RELEASE_OF_LIABILITY_TEMPLATE.format(
-                day=current_datetime.day,
-                month=current_datetime.strftime("%B"),
-                year=current_datetime.year
-                ),
-            timestamp=datetime.datetime.now(),
+        asyncio.create_task(
+            self.message.edit(view = self, embed=self.__setup_embed())
         )
-        embed.add_field(name='Signed', value=" | ".join(['<@' + str(player_id) + '>' for player_id in self.players_ready_ids]))
-        embed.add_field(name='Not Signed', value=" | ".join(['<@' + str(player_id) + '>' for player_id in not_ready_players]))
+        self.workers = [
+            asyncio.create_task(
+                self.__update_message_worker(),
+            ),
+            asyncio.create_task(
+                self.__start_game_worker()
+                )
+        ]
+
+    def __setup_embed(self) -> discord.Embed:
+        not_ready_players = [player for player in self.players if player.id not in self.__players_ready]
+        
+        embed = discord.Embed(
+            color=self.EMBED_COLOR,
+            title=self.EMBED_TITLE,
+            description=self.GENERAL_RELEASE_OF_LIABILITY_TEMPLATE.format(
+                day=self.created_at.day,
+                month=self.created_at.strftime("%B"),
+                year=self.created_at.year
+                ),
+            timestamp=self.created_at,
+        )
+        embed.add_field(name='Signed', value=" | ".join(['<@' + str(player_id) + '>' for player_id in self.__players_ready]))
+        embed.add_field(name='Not Signed', value=" | ".join([player.mention for player in not_ready_players]))
         return embed
 
-    async def setup_game(self, interaction: discord.Interaction) -> None:
-        game_view = BuckshotRouletteGameView(self.players, self.extreme, interaction.channel)
+    async def __start_game_service(self) -> None:
+        game_view = BuckshotRouletteGameView(self.players, self.extreme, self.message.channel)
 
         embed = await game_view.setup_embed()
-        await interaction.response.defer()
-        message = await interaction.channel.send(embed=embed, view=game_view)
+        message = await self.message.channel.send(embed=embed, view=game_view)
 
         # TODO NO
         game_view.message = message
 
-        await interaction.message.delete()
-
+        await self.message.delete()
     
+    async def __start_game_worker(self) -> None:
+        await self.no_more_players_event.wait()
+        await self.__start_game_service()
+
+    def __game_start_checker(self) -> None:
+        if len(self.players) == len(self.__players_ready):
+            self.no_more_players_event.set()
+
+    async def __update_message_worker(self) -> None:
+        while not self.no_more_players_event.is_set():
+            collected_players = []
+
+            first_player_collected = await self.player_queue.get()
+            collected_players.append(first_player_collected)
+
+            while True:
+                try:
+                    collected_player = self.player_queue.get_nowait()
+                    collected_players.append(collected_player)
+                except asyncio.QueueEmpty:
+                    break
+            
+            self.__players_ready.extend(collected_players)
+            self.__players_ready = list(dict.fromkeys(self.__players_ready))
+
+            new_embed = self.__setup_embed()
+            await self.message.edit(embed=new_embed)
+
+            self.__game_start_checker()
+            for _ in range(len(collected_players)):
+                self.player_queue.task_done()
+
     @discord.ui.button(
         label = 'Sign',
         custom_id = 'button_ready',
@@ -158,22 +204,12 @@ class BuckshotRouletteLobbyView(discord.ui.View):
         row = 0
     )
     async def button_ready_callback(self, interaction: discord.Interaction, button: discord.Button) -> None:
-        if interaction.user.id not in [player.id for player in self.players]:
-            await interaction.response.send_message(choice(self.DENY_PLAYER_MESSAGES), ephemeral=True, delete_after=15)
+        if interaction.user not in self.players:
+            await interaction.response.send_message(choice(self.DENY_PLAYER_MESSAGES), ephemeral=True, delete_after=10)
             return
         
-        if interaction.user.id in self.players_ready_ids:
-            await interaction.response.defer()
-            return
-
-        self.players_ready_ids.append(interaction.user.id)
-        new_embed = await self.setup_embed()
-
-        if len(self.players_ready_ids) != len(self.players):
-            await interaction.response.edit_message(embed=new_embed, view=self)
-            return
-        
-        await self.setup_game(interaction)
+        await interaction.response.defer()
+        await self.player_queue.put(interaction.user.id)
 
 
 class BuckshotRouletteGameView(discord.ui.View):
