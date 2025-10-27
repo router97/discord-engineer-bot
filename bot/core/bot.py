@@ -7,16 +7,17 @@ from .config import COMMAND_PREFIX
 from .help_command import CustomHelpCommand
 
 
-intents = Intents.default()
-intents.members = True
-intents.message_content = True
-intents.presences = True
-intents.moderation = True
+# intents = Intents.default()
+# intents.members = True
+# intents.message_content = True
+# intents.presences = True
+# intents.moderation = True
+# intents.all = True
 
 
 bot = commands.Bot(
     command_prefix=COMMAND_PREFIX,
-    intents=intents,
+    intents=Intents.all(),
     help_command=CustomHelpCommand(),
 )
 

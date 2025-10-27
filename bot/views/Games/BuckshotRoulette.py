@@ -22,7 +22,7 @@ class Shell(Enum):
 
 
 class Item(Enum):
-    BEER = 0
+    BEER = 0 # works
     ADRENALINE = 1
     INVERTER = 2
 
@@ -59,6 +59,13 @@ class Shotgun:
     
         fired_round: Shell = self.__magazine.pop(0)
         self.sawed_off = False
+        return fired_round
+    
+    def rack(self) -> Shell:
+        if not self.check_shells_left() > 0:
+            raise Exception("Can't rack shotgun. No shells left")
+    
+        fired_round: Shell = self.__magazine.pop(0)
         return fired_round
 
     def check_shells_left(self) -> int:
@@ -265,7 +272,7 @@ class BuckshotRouletteGameView(discord.ui.View):
 
         self.channel: discord.TextChannel = channel
         
-        self.base_hp = 4
+        self.base_hp = 1
         for i in range(len(self.players)):
             self.health_points[i] = self.base_hp
 
@@ -282,20 +289,26 @@ class BuckshotRouletteGameView(discord.ui.View):
         create_task(self.channel.send(embed=embed, delete_after=10))
         
 
-        self.max_inventory_size: int = 50
+        self.max_inventory_size: int = 100
         amount_of_items = 25
         available_items = list(Item)
 
         for i in range(len(self.players)):
-            if not self.inventory.get(i):
-                self.inventory[i] = []
-            items_picked_up = []
-            item_selection = [choice(available_items) for _ in range(amount_of_items)]
-            for item in item_selection:
-                if len(self.inventory[i]) == self.max_inventory_size:
-                    break
-                self.inventory[i].append(item)
-                items_picked_up.append(item)
+            self.inventory[i] = available_items.copy()
+            self.inventory[i].extend(available_items.copy())
+            self.inventory[i].extend(available_items.copy())
+            self.inventory[i].extend(available_items.copy())
+            self.inventory[i].extend(available_items.copy())
+            self.inventory[i].extend(available_items.copy())
+            # if not self.inventory.get(i):
+            #     self.inventory[i] = []
+            # items_picked_up = []
+            # item_selection = [choice(available_items) for _ in range(amount_of_items)]
+            # for item in item_selection:
+            #     if len(self.inventory[i]) == self.max_inventory_size:
+            #         break
+            #     self.inventory[i].append(item)
+            #     items_picked_up.append(item)
     
     async def action_queue_worker(self) -> None:
         while True:
@@ -377,14 +390,20 @@ class BuckshotRouletteGameView(discord.ui.View):
         await self.channel.send(f"{data['interaction'].user.mention} USED {item.name}", delete_after=10)
         await self.item_logic[item](data)
 
+        old_embed = self.message.embeds[0]
+        new_embed = await self.setup_embed(old_embed)
+        await self.message.edit(embed=new_embed)
+
     async def item_beer_logic(self, data: dict) -> None:
-        ejected_shell = self.shotgun.fire()
-        interaction: discord.Interaction = data['interaction']
-        something: discord.WebhookMessage = await interaction.followup.send(':white_check_mark:')
-        await asyncio.gather(
-            something.delete(delay=2),
-            self.channel.send(f'RACKED THE SHOTGUN... {ejected_shell.name}...', delete_after=10)
-        )
+        try:
+            ejected_shell = self.shotgun.rack()
+            interaction: discord.Interaction = data['interaction']
+            something: discord.WebhookMessage = await interaction.followup.send(':white_check_mark:')
+            asyncio.create_task(something.delete())
+            await self.channel.send(f'RACKED THE SHOTGUN... {ejected_shell.name}...', delete_after=10)
+
+        except Exception as e:
+            print(e)
     
     async def item_magnifying_glass_logic(self, data: dict) -> None:
         next_shell = self.shotgun.check_next_shell()
@@ -393,25 +412,27 @@ class BuckshotRouletteGameView(discord.ui.View):
             color=discord.Color.red() if next_shell == Shell.LIVE else discord.Color.light_gray(),
         ).set_image(url=self.BLANK_SHELL_IMAGE_URL if next_shell == Shell.BLANK else self.LIVE_SHELL_IMAGE_URL)
         
-        await data['interaction'].followup.send(embed=magnifying_glass_embed)
+        message: discord.WebhookMessage = await data['interaction'].followup.send(embed=magnifying_glass_embed)
+        asyncio.create_task(message.delete(delay=10))
 
     async def item_inverter_logic(self, data: dict) -> None:
         self.shotgun.invert_current_shell()
         something: discord.WebhookMessage = await data['interaction'].followup.send(':white_check_mark:')
-        await something.delete(delay=2)
+        asyncio.create_task(something.delete())
 
     async def item_handsaw_logic(self, data: dict) -> None:
         self.shotgun.sawed_off = True
         something: discord.WebhookMessage = await data['interaction'].followup.send(':white_check_mark:')
-        await something.delete(delay=2)
+        asyncio.create_task(something.delete())
     
     async def item_cigarettes_logic(self, data: dict) -> None:
         current_health = self.health_points[data['author']]
         if current_health == self.base_hp:
-            pass
+            message: discord.WebhookMessage = await data['interaction'].followup.send(f'HEALTH ALREADY MAX')
         else:
             self.health_points[data['author']] += 1
-            await data['interaction'].followup.send(f'RESTORED 1 HEALTH', delete_after=10)
+            message: discord.WebhookMessage = await data['interaction'].followup.send(f'RESTORED 1 HEALTH')
+        asyncio.create_task(message.delete(delay=10))
 
     async def item_expired_medicine_logic(self, data: dict) -> None:
         medicine_worked = bool(randint(0, 1))
@@ -419,7 +440,7 @@ class BuckshotRouletteGameView(discord.ui.View):
         current_health = self.health_points[data['author']]
 
         something: discord.WebhookMessage = await data['interaction'].followup.send(':white_check_mark:')
-        await something.delete(delay=2)
+        asyncio.create_task(something.delete())
 
         if not medicine_worked:
             medicine_string += 'BAD MEDICINE. '
@@ -437,33 +458,42 @@ class BuckshotRouletteGameView(discord.ui.View):
             if current_health <= self.base_hp-2:
                 self.health_points[data['author']] += 2
                 medicine_string += 'RESTORED 2 HEALTH POINTS'
-            else:
+            elif current_health == self.base_hp-1:
                 self.health_points[data['author']] = self.base_hp
                 medicine_string += 'RESTORED 1 HEALTH POINT.'
+            else:
+                medicine_string += 'HEALTH ALREADY MAX.'
+        
         await self.channel.send(medicine_string, delete_after=10)
 
     async def item_burner_phone_logic(self, data: dict) -> None:
-        shell, position = self.shotgun.check_random_shell()
-        if not shell and not position:
-            something: discord.WebhookMessage = await data['interaction'].followup.send(f'HOW UNFORTUNATE...')
-        else:
-            something: discord.WebhookMessage = await data['interaction'].followup.send(f'{ordinal(position).upper()} SHELL... {shell.name.upper()}...')
-        asyncio.create_task(something.delete(delay=15))
+        interaction: discord.Interaction = data['interaction']
+        try:
+            shell, position = self.shotgun.check_random_shell()
+            if not shell and not position:
+                something: discord.WebhookMessage = await interaction.followup.send('HOW UNFORTUNATE...')
+            else:
+                something: discord.WebhookMessage = await interaction.followup.send(f'{ordinal(position).upper()} SHELL... {shell.name.upper()}...')
+            asyncio.create_task(something.delete(delay=10))
+        except Exception as e:
+            print(e)
 
     async def item_remote_logic(self, data: dict) -> None:
         self.rotation = 'backwards' if self.rotation == 'forward' else 'forward'
         something: discord.WebhookMessage = await data['interaction'].followup.send(':white_check_mark:')
         asyncio.create_task(something.delete())
-        await self.channel(f'NOW WE GO {self.rotation.upper()}', delete_after=10)
+        await self.channel.send(f'NOW WE GO {self.rotation.upper()}', delete_after=10)
 
     async def item_handcuffs_logic(self, data: dict) -> None:
         if self.handcuff_delay.get(data['author'], 0):
-            await data['interaction'].followup.send('CANNOT USE HANDCUFFS. (you lost them regardless)')
+            message: discord.WebhookMessage = await data['interaction'].followup.send('CANNOT USE HANDCUFFS. (you lost them regardless)')
+            asyncio.create_task(message.delete(delay=10))
         else:
             self.handcuff_delay[data['author']] = 2
             view = HandcuffsView(self, timeout=30)
-            await data['interaction'].followup.send(view=view)
+            message: discord.WebhookMessage = await data['interaction'].followup.send(view=view)
             await view.wait()
+            asyncio.create_task(message.delete())
     
     async def item_adrenaline_logic(self, data: dict) -> None:
         timeout = 10
@@ -475,10 +505,10 @@ class BuckshotRouletteGameView(discord.ui.View):
         data['interaction'] = new_interaction
 
         if not view.stolen_item and not view.item_owner:
+            asyncio.create_task(adrenaline_message.delete())
             return
         await self.channel.send(f"{interaction.user.mention} STOLE {view.stolen_item.name.upper()} FROM {self.players[view.item_owner].mention}.", delete_after=10)
         self.inventory[view.item_owner].remove(view.stolen_item)
-        self.inventory[data['author']].append(view.stolen_item)
         await self.item_logic[view.stolen_item](data)
         asyncio.create_task(adrenaline_message.delete())
 
@@ -615,9 +645,10 @@ class BuckshotRouletteGameView(discord.ui.View):
 
     async def punish_player(self, player_position: int) -> None:
         try:
-            await self.players[player_position].timeout(datetime.timedelta(seconds=10))
-        except:
+            await self.players[player_position].timeout(datetime.timedelta(seconds=10), reason='Automatic. Lost in buckshot roulette.')
+        except Exception as e:
             await self.channel.send(f"COULDN'T PUNISH {self.players[player_position]}...", delete_after=20)
+            await self.channel.send(e.__repr__())
 
     async def setup_embed(self, embed_to_update: discord.Embed = None) -> discord.Embed:
         next_up, one_player_left = self.know_next_player()
@@ -644,6 +675,7 @@ class BuckshotRouletteGameView(discord.ui.View):
         if embed_to_update:
             embed_to_update.set_field_at(0, name='Holding the shotgun:', value=self.players[self.current_player].mention + f'⚡x{self.health_points[self.current_player]}')
             embed_to_update.set_field_at(1, name='Next up:', value=self.players[next_up].mention + f'⚡x{self.health_points[next_up]}')
+            embed_to_update.set_footer(text=f"Direction: {self.rotation}")
             return embed_to_update
         name_list = [member.mention + f"⚡x{self.health_points[self.get_player_position_by_id(member.id)]}" for member in self.players]
         embed: discord.Embed = discord.Embed(
@@ -873,9 +905,7 @@ class HandcuffsSelect(discord.ui.Select):
     async def use(self, target_position: int) -> None:
         self.original_view.skipping_turn[target_position] = True
         await self.original_view.channel.send(f'USED HANDCUFFS ON {self.original_view.players[target_position].mention}.', delete_after=10)
-        old_embed = self.original_view.message.embeds[0]
-        new_embed = await self.original_view.setup_embed(old_embed)
-        await self.original_view.message.edit(embed=new_embed)
+        
 
 
 class AdrenalineView(discord.ui.View):
