@@ -22,7 +22,7 @@ bot = commands.Bot(
 )
 
 
-async def setup_activity(name: Optional[str] = '.help') -> None:
+async def setup_activity(name: Optional[str] = f'{COMMAND_PREFIX}help') -> None:
     if len(name) > 128:
         name: str = name[:125] + "..."
 
