@@ -21,14 +21,9 @@ class Games(commands.Cog):
                       displayed_default='Bot',
                       displayed_name='Opponent',
                   )) -> None:
-        """
-        Doc
-        """
-        # Default opponent to bot if none is provided
         if member is None:
             member = ctx.bot.user
 
-        # Check if the user is trying to play with themselves
         if ctx.author == member:
             await ctx.reply(
                 content="Yeah, I wonder who'd win.",
@@ -38,11 +33,9 @@ class Games(commands.Cog):
             )
             return
 
-        # Set up message components
         view = TicTacToeView(user1=ctx.author, user2=member)
         embed = await view.setup_embed()
 
-        # Send the message
         await ctx.reply(
             embed=embed,
             silent=True,
@@ -58,15 +51,9 @@ class Games(commands.Cog):
                       displayed_default='Bot',
                       displayed_name='Opponent',
                   )) -> None:
-        """
-        Doc
-        """
-
-        # Default opponent to bot if none is provided
         if member is None:
             member = ctx.bot.user
 
-        # Check if the user is trying to play with themselves
         if ctx.author == member:
             await ctx.reply(
                 content="Yeah, I wonder who'd win.",
@@ -76,11 +63,9 @@ class Games(commands.Cog):
             )
             return
 
-        # Set up message components
         view = RockPaperScissorsView(user1=ctx.author, user2=member)
         embed = await view.setup_embed()
 
-        # Send the message
         await ctx.reply(
             embed=embed,
             silent=True,
@@ -156,9 +141,6 @@ class Games(commands.Cog):
 
 
 async def ttt_context_menu_callback(interaction: discord.Interaction, member: discord.Member) -> None:
-    """Tic-tac-toe context menu."""
-
-    # Check if the user is trying to play with themselves
     if interaction.user == member:
         await interaction.response.send_message(
             content="Yeah, I wonder who'd win.",
@@ -168,11 +150,9 @@ async def ttt_context_menu_callback(interaction: discord.Interaction, member: di
         )
         return
 
-    # Set up message components
     view = TicTacToeView(user1=interaction.user, user2=member)
     embed = await view.setup_embed()
 
-    # Send the message
     await interaction.response.send_message(
         embed=embed,
         silent=True,
@@ -181,9 +161,6 @@ async def ttt_context_menu_callback(interaction: discord.Interaction, member: di
 
 
 async def rps_context_menu_callback(interaction: discord.Interaction, member: discord.Member) -> None:
-    """Rock, paper, scissors context menu."""
-
-    # Check if the user is trying to play with themselves
     if interaction.user == member:
         await interaction.response.send_message(
             content="Yeah, I wonder who'd win.",
@@ -193,11 +170,10 @@ async def rps_context_menu_callback(interaction: discord.Interaction, member: di
         )
         return
 
-    # Set up message components
+
     view = RockPaperScissorsView(user1=interaction.user, user2=member)
     embed = await view.setup_embed()
 
-    # Send the message
     await interaction.response.send_message(
         embed=embed,
         silent=True,
@@ -206,11 +182,6 @@ async def rps_context_menu_callback(interaction: discord.Interaction, member: di
 
 
 async def rr_context_menu_callback(interaction: discord.Interaction, member: discord.Member) -> None:
-    """
-    A Russian roulette game user context menu.
-    """
-
-    # Check if the user is trying to play with themselves
     if interaction.user == member:
         await interaction.response.send_message(
             content="Yeah, I wonder who'd win.",
@@ -220,11 +191,9 @@ async def rr_context_menu_callback(interaction: discord.Interaction, member: dis
         )
         return
 
-    # Set up message components
     view: RussianRouletteView = RussianRouletteView(user1=interaction.user, user2=member)
     embed: discord.Embed = await view.setup_embed()
 
-    # Send the message
     await interaction.response.send_message(
         embed=embed,
         view=view,

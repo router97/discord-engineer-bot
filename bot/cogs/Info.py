@@ -1,10 +1,3 @@
-"""
-Info
-====
-
-This cog module contains mostly commands that display information about something.
-For example, displaying information about a certain user or a guild.
-"""
 import unicodedata
 import datetime
 from typing import Optional
@@ -17,10 +10,6 @@ from numerize.numerize import numerize
 
 
 class Info(commands.Cog):
-    """
-    A cog with information-related commands.
-    """
-
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
@@ -29,14 +18,6 @@ class Info(commands.Cog):
             self,
             ctx: commands.Context,
     ) -> None:
-        """
-        Replies with an embed, containing fields with information about the server.
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :return: None. The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         await ctx.defer(ephemeral=True)
         guild: discord.Guild = ctx.guild
 
@@ -145,16 +126,6 @@ class Info(commands.Cog):
                 displayed_name="User",
             ),
     ) -> None:
-        """
-        Replies with an embed, containing information about a user.
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :param member:
-        :type member:
-        :return: None. The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         await ctx.defer(ephemeral=True)
         member: discord.Member = member or ctx.author
 
@@ -198,16 +169,6 @@ class Info(commands.Cog):
                 displayed_name="User",
             ),
     ) -> None:
-        """
-        Fetches a user's avatar.
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :param member: The user you want to view.
-        :type member: commands.MemberConverter
-        :return: The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         await ctx.defer(ephemeral=True)
 
         member: discord.Member = member or ctx.author
@@ -239,16 +200,6 @@ class Info(commands.Cog):
                 displayed_name='Emote',
             )
     ) -> None:
-        """
-        Replies with an embed, containing information about an emote(or character).
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :param emote: The emote(or character) you want to inspect.
-        :type emote: str
-        :return: None. The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         await ctx.defer(ephemeral=True)
 
         embed: discord.Embed = discord.Embed()
@@ -290,14 +241,6 @@ class Info(commands.Cog):
             self,
             ctx: commands.Context,
     ) -> None:
-        """
-        Replies with an embed, containing information about an emote(or character).
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :return: None. The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         embed: discord.Embed = discord.Embed(
             color=discord.Color.teal(),
             title='Engineer',
@@ -333,16 +276,6 @@ class Info(commands.Cog):
 
 
 async def user_info_context_menu_callback(interaction: discord.Interaction, user: discord.Member) -> None:
-    """
-    Replies with an embed, containing information about a user.
-
-    :param interaction: The interaction with the context menu.
-    :type interaction: discord.Interaction
-    :param user: The user you want to inspect.
-    :type user: discord.Member
-    :return: None. The function only sends a Discord message, doesn't return anything in the code.
-    :rtype: None
-    """
     registered_at: int = round(user.created_at.timestamp())
     joined_at: int = round(user.joined_at.timestamp())
 

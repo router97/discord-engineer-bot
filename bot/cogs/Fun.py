@@ -1,10 +1,3 @@
-"""
-Fun
-===
-
-This cog module contains miscellaneous, non-essential commands.
-"""
-
 import datetime
 import time
 from random import choice
@@ -20,11 +13,6 @@ faker = Faker()
 
 
 class Fun(commands.Cog):
-    """
-    Miscellaneous commands.
-
-    This class contains non-essential random commands.
-    """
     RANDOM_REPLIES: list[str] = [
         "I'm good",
         "KYS = Keep Yourself Safe",
@@ -40,26 +28,10 @@ class Fun(commands.Cog):
 
     @commands.hybrid_command(name="ip", description="Generate a random IPv4 address.")
     async def ip(self, ctx: commands.Context) -> None:
-        """
-        Replies with a random **IPv4** address generated using **Faker**.
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :return: None. The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         await ctx.reply(faker.ipv4())
 
     @commands.hybrid_command(name="fog", description="The fog is coming...")
     async def fog(self, ctx: commands.Context) -> None:
-        """
-        Replies with how much time is left until the **fog** comes.
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :return: The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         current_time: float = time.time()
         time_difference: float = self.FOG_ARRIVAL_TIMESTAMP - current_time
 
@@ -79,14 +51,6 @@ class Fun(commands.Cog):
 
     @commands.hybrid_command(name="kys", description="Kys.")
     async def kys(self, ctx: commands.Context) -> None:
-        """
-        Replies with a random string from ``self.RANDOM_REPLIES``.
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :return: The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         await ctx.reply(choice(self.RANDOM_REPLIES))
 
     @commands.hybrid_command(name='do', description='Change the presence of the bot.')
@@ -99,16 +63,6 @@ class Fun(commands.Cog):
                 displayed_name='Name',
             )
     ) -> None:
-        """
-        Changes the bot's presence.
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :param name: The text, which would be set as the bot's activity.
-        :type name: str
-        :return: The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         await setup_activity(name)
         await ctx.reply(
             content=f"Changed the bot's presence to `{name}`.",
