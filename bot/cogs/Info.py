@@ -301,8 +301,8 @@ async def user_info_context_menu_callback(interaction: discord.Interaction, user
     )
 
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Info(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Info(bot))
 
     user_info_context_menu = app_commands.ContextMenu(
         name='Show Info',

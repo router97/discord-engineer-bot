@@ -3,22 +3,17 @@ import atexit
 import asyncio
 
 from core.bot import bot, setup_activity
-from core.config import *
-
-from cogs.Fun import Fun
-from cogs.Games import Games
-from cogs.Info import Info
-from cogs.Utilities import Utilities
-
+import core.config as config
 
 logger = logging.getLogger(name='discord.log')
 
+extensions = ['Games', 'Info', 'Utilities', 'Fun']
+extension_path = 'cogs'
 
 async def setup_cogs() -> None:
-    await bot.add_cog(Fun(bot))
-    await bot.add_cog(Games(bot))
-    await bot.add_cog(Info(bot))
-    await bot.add_cog(Utilities(bot))
+    for extension in extensions:
+        await bot.load_extension(f"{extension_path}.{extension}")
+    
     await bot.tree.sync()
 
 
@@ -33,13 +28,22 @@ async def shutdown() -> None:
     logger.info("Bot is shutting down.")
 
 
+@bot.command()
+async def reload(ctx, extension):
+    if not extension in extensions:
+        return
+    
+    desired_extension = extension_path + '.' + extension
+    await bot.reload_extension(desired_extension)
+
+
 @bot.event
 async def on_disconnect() -> None:
     await shutdown()
 
 
 def main() -> None:
-    bot.run(DISCORD_BOT_TOKEN)
+    bot.run(config.DISCORD_BOT_TOKEN)
 
 
 if __name__ == '__main__':

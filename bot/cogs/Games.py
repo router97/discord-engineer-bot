@@ -201,8 +201,8 @@ async def rr_context_menu_callback(interaction: discord.Interaction, member: dis
     )
 
 
-def setup(bot: commands.Bot):
-    bot.add_cog(Games(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Games(bot))
 
     ttt_context_menu = app_commands.ContextMenu(
         name='Tic-Tac-Toe',

@@ -131,5 +131,5 @@ class Utilities(commands.Cog, name='Utilities', description='Somewhat useful com
         await ctx.send_help(ctx.command)
 
 
-def setup(bot: commands.Bot) -> None:
-    bot.add_cog(Utilities(bot))
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(Utilities(bot))
