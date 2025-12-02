@@ -7,12 +7,12 @@ import core.config as config
 
 logger = logging.getLogger(name='discord.log')
 
-extensions = ['Games', 'Info', 'Utilities', 'Fun']
-extension_path = 'cogs'
+extensions = ['Games', 'Info', 'Utilities', 'Fun', 'Admin']
+bot.extension_path = 'cogs'
 
 async def setup_cogs() -> None:
     for extension in extensions:
-        await bot.load_extension(f"{extension_path}.{extension}")
+        await bot.load_extension(f"{bot.extension_path}.{extension}")
     
     await bot.tree.sync()
 
@@ -26,15 +26,6 @@ async def on_ready() -> None:
 
 async def shutdown() -> None:
     logger.info("Bot is shutting down.")
-
-
-@bot.command()
-async def reload(ctx, extension):
-    if not extension in extensions:
-        return
-    
-    desired_extension = extension_path + '.' + extension
-    await bot.reload_extension(desired_extension)
 
 
 @bot.event
