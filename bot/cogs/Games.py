@@ -12,14 +12,14 @@ class Games(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="ttt", description="A simple Tic-tac-toe game.", aliases=['tictactoe', 'tic-tac-toe'])
+    @commands.hybrid_command(name="ttt", description="Tic-Tac-Toe.", aliases=['tictactoe', 'tic-tac-toe'])
     async def ttt(self, ctx: commands.Context,
                   member: discord.Member = commands.parameter(
                       converter=commands.MemberConverter,
                       default=None,
-                      description="The user you want to play against.",
+                      description="The user you want to play with. BOT HASN'T BEEN IMPLEMENTED YET.",
                       displayed_default='Bot',
-                      displayed_name='Opponent',
+                      displayed_name='Player 2',
                   )) -> None:
         if member is None:
             member = ctx.bot.user
@@ -42,14 +42,14 @@ class Games(commands.Cog):
             view=view,
         )
 
-    @commands.hybrid_command(name="rps", description="A simple rock, paper, scissors game.", aliases=['rockpaperscissors'])
+    @commands.hybrid_command(name="rps", description="Rock, Paper, Scissors.", aliases=['rockpaperscissors'])
     async def rps(self, ctx: commands.Context,
                   member: discord.Member = commands.parameter(
                       converter=commands.MemberConverter,
                       default=None,
-                      description="The user you want to play against.",
+                      description="The user you want to play with.",
                       displayed_default='Bot',
-                      displayed_name='Opponent',
+                      displayed_name='Player 2',
                   )) -> None:
         if member is None:
             member = ctx.bot.user
@@ -72,14 +72,14 @@ class Games(commands.Cog):
             view=view,
         )
 
-    @commands.hybrid_command(name="rr", description="Russian roulette", aliases=['russianroulette'])
+    @commands.hybrid_command(name="rr", description="Russian roulette.", aliases=['russianroulette'])
     async def rr(self, ctx: commands.Context,
                  member: discord.Member = commands.parameter(
-                     converter=commands.MemberConverter,
-                     default=None,
-                     description="The user you want to play against.",
-                     displayed_default='Bot',
-                     displayed_name='Opponent'
+                    converter=commands.MemberConverter,
+                    default=None,
+                    description="The user you want to play with. BOT HASN'T BEEN IMPLEMENTED YET.",
+                    displayed_default='Bot',
+                    displayed_name='Player 2',
                  ),
                  extreme: str = 'no') -> None:
         if member is None:
@@ -103,16 +103,21 @@ class Games(commands.Cog):
             allowed_mentions=discord.AllowedMentions(users=[ctx.author, member]),
         )
     
-    @commands.hybrid_command(name="buckshot", description="Buckshot Roulette", aliases=['buckshotroulette'])
+    @commands.hybrid_command(name="buckshot", description="Buckshot Roulette (Mike Klubnika respect +9999).", aliases=['buckshotroulette'])
     async def buckshot(
         self,
         ctx: commands.Context,
         players: commands.Greedy[discord.Member] = commands.parameter(
-            description='Players',
+            description="I'd suggest against playing alone. BOT hasn't been implemented.",
             displayed_name='Players',
         ),
         *,
-        extreme: str = None
+        extreme: str = commands.parameter(
+            displayed_name='Mode',
+            description='Currently the only other mode is "extreme".\nExtreme: Punish players on death.',
+            displayed_default='Casual',
+            default=None,
+        )
         ) -> None:
         extreme_converted = True if extreme=='extreme' else False
         players_including_author = list(players)
@@ -134,10 +139,9 @@ class Games(commands.Cog):
         )
         BuckshotRouletteLobbyView(message, players_cleaned_up, extreme_converted)
 
-
-    # async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
-    #     await ctx.message.add_reaction('❌')
-    #     await ctx.send_help(ctx.command)
+    async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
+        await ctx.message.add_reaction('❌')
+        await ctx.send_help(ctx.command)
 
 
 async def ttt_context_menu_callback(interaction: discord.Interaction, member: discord.Member) -> None:

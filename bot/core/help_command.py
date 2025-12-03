@@ -109,7 +109,7 @@ class CustomHelpCommand(commands.HelpCommand):
 
         for parameter in command.clean_params.values():
             description = parameter.description if parameter.description else ''
-            if parameter.default:
+            if parameter.displayed_default:
                 description += f'\nDefaults to {parameter.displayed_default}'
 
             embed.add_field(

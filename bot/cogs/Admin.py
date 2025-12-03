@@ -8,8 +8,13 @@ class Admin(commands.Cog):
         self.bot: commands.Bot = bot
     
     @commands.is_owner()
-    @commands.hybrid_command(name="reload", description="Reload an extension.", hidden=True)
-    async def reload(self, ctx: commands.Context, extension: str) -> None:
+    @commands.hybrid_command(name="reload", description="Reload an extension. OWNER-ONLY")
+    async def reload(self, ctx: commands.Context, 
+                     extension: str = commands.parameter(
+                         displayed_name='Extension',
+                         description='The extension name.\nEXAMPLE: `Admin` or `games`. case-insensitive.'
+                         )
+                     ) -> None:
         desired_extension = self.bot.extension_path + '.' + extension.title()
         if not desired_extension in self.bot.extensions:
             await ctx.reply(f'Extension {desired_extension} not present. Current Extensions: {self.bot.extensions}')

@@ -59,8 +59,8 @@ class Fun(commands.Cog):
             ctx: commands.Context,
             *,
             name: str = commands.parameter(
-                description="The text, which would be set as the bot's activity.",
-                displayed_name='Name',
+                description="The new activity. Up to 128 characters long.",
+                displayed_name='Activity',
             )
     ) -> None:
         await setup_activity(name)
