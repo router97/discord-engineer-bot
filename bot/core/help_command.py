@@ -44,7 +44,7 @@ class CustomHelpCommand(commands.HelpCommand):
         embed: discord.Embed = discord.Embed(
             title='Available commands:',
             color=discord.Color.teal(),
-            description='You can get detailed help information for every command'
+            description='You can get detailed help information for every command '
                         f"by passing its name, for example: `{COMMAND_PREFIX}help ip`",
         )
         embed.set_thumbnail(url=self.context.bot.user.display_avatar.url)
@@ -85,7 +85,7 @@ class CustomHelpCommand(commands.HelpCommand):
 
         for command in cog.get_commands():
             embed.add_field(
-                name=COMMAND_PREFIX+command.qualified_name,
+                name=f"`{COMMAND_PREFIX}{command.qualified_name}`",
                 value=command.description,
                 inline=False,
             )
@@ -105,7 +105,7 @@ class CustomHelpCommand(commands.HelpCommand):
             color=discord.Color.teal(),
             description=command.description,
         )
-        embed.set_author(name=f'Command "{COMMAND_PREFIX}{command.qualified_name}"')
+        embed.set_author(name=f'Command {COMMAND_PREFIX}{command.qualified_name}')
 
         for parameter in command.clean_params.values():
             description = parameter.description if parameter.description else ''
