@@ -5,9 +5,11 @@ import asyncio
 from core.bot import bot, setup_activity
 import core.config as config
 
+from cogs import extensions
+
 logger = logging.getLogger(name='discord.log')
 
-extensions = ['Games', 'Info', 'Utilities', 'Fun', 'Admin']
+
 bot.extension_path = 'cogs'
 
 async def setup_cogs() -> None:

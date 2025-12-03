@@ -99,7 +99,7 @@ class CustomHelpCommand(commands.HelpCommand):
     async def send_group_help(self, group) -> None:
         return await super().send_group_help(group)
 
-    async def send_command_help(self, command) -> None:
+    async def send_command_help(self, command: commands.Command) -> None:
         embed: discord.Embed = discord.Embed(
             color=discord.Color.teal(),
             description=command.description,
