@@ -8,7 +8,7 @@ class Admin(commands.Cog):
         self.bot: commands.Bot = bot
     
     @commands.is_owner()
-    @commands.hybrid_command(name="reload", description="Reload an extension.")
+    @commands.hybrid_command(name="reload", description="Reload an extension.", hidden=True)
     async def reload(self, ctx: commands.Context, extension: str) -> None:
         desired_extension = self.bot.extension_path + '.' + extension.title()
         if not desired_extension in self.bot.extensions:

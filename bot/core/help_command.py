@@ -3,6 +3,7 @@ from discord.ext import commands
 
 from .config import COMMAND_PREFIX
 
+# TODO: hide hidden commands and cogs
 
 class SendBotHelpSelect(discord.ui.Select):
     def __init__(self, help_command: commands.HelpCommand, cogs: list[commands.Cog]) -> None:
@@ -107,7 +108,7 @@ class CustomHelpCommand(commands.HelpCommand):
         embed.set_author(name=f'Command "{COMMAND_PREFIX}{command.qualified_name}"')
 
         for parameter in command.clean_params.values():
-            description = parameter.description
+            description = parameter.description if parameter.description else ''
             if parameter.default:
                 description += f'\nDefaults to {parameter.displayed_default}'
 
