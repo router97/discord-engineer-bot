@@ -1,11 +1,9 @@
-FROM python:3.12.4-slim
+FROM python:3.14-slim
 
-RUN pip install --no-cache-dir poetry
+COPY requirements.txt .
 
-COPY pyproject.toml poetry.lock ./
-
-RUN poetry install
+RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["poetry", "run", "python", "bot/main.py"]
+CMD ["python", "bot/main.py"]

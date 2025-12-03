@@ -1,7 +1,10 @@
-"""
-Cogs
-====
+__all__ = 'extensions'
 
-This is a package that contains all the bot's cog modules.
-Cogs are basically bundles of commands.
-"""
+extensions = [
+    'Games', 
+    'Info', 
+    'Utilities', 
+    'Fun', 
+    'Admin', 
+    'Moderation',
+]

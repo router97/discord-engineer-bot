@@ -1,11 +1,3 @@
-"""
-Games
-=====
-
-This cog module contains some simple message-based games
-using message components like embeds and buttons.
-"""
-
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -13,17 +5,11 @@ from discord.ext import commands
 from views.Games.TicTacToe import TicTacToeView
 from views.Games.RockPaperScissors import RockPaperScissorsView
 from views.Games.RussianRoulette import RussianRouletteView
+from views.Games.BuckshotRoulette import BuckshotRouletteLobbyView
 
 
 class Games(commands.Cog):
-    """
-    Some simple message-based games, using message components like: embeds, buttons.
-    """
-
     def __init__(self, bot: commands.Bot) -> None:
-        """
-        Doc
-        """
         self.bot = bot
 
     @commands.hybrid_command(name="ttt", description="A simple Tic-tac-toe game.", aliases=['tictactoe', 'tic-tac-toe'])
@@ -35,14 +21,9 @@ class Games(commands.Cog):
                       displayed_default='Bot',
                       displayed_name='Opponent',
                   )) -> None:
-        """
-        Doc
-        """
-        # Default opponent to bot if none is provided
         if member is None:
             member = ctx.bot.user
 
-        # Check if the user is trying to play with themselves
         if ctx.author == member:
             await ctx.reply(
                 content="Yeah, I wonder who'd win.",
@@ -52,11 +33,9 @@ class Games(commands.Cog):
             )
             return
 
-        # Set up message components
         view = TicTacToeView(user1=ctx.author, user2=member)
         embed = await view.setup_embed()
 
-        # Send the message
         await ctx.reply(
             embed=embed,
             silent=True,
@@ -72,15 +51,9 @@ class Games(commands.Cog):
                       displayed_default='Bot',
                       displayed_name='Opponent',
                   )) -> None:
-        """
-        Doc
-        """
-
-        # Default opponent to bot if none is provided
         if member is None:
             member = ctx.bot.user
 
-        # Check if the user is trying to play with themselves
         if ctx.author == member:
             await ctx.reply(
                 content="Yeah, I wonder who'd win.",
@@ -90,18 +63,16 @@ class Games(commands.Cog):
             )
             return
 
-        # Set up message components
         view = RockPaperScissorsView(user1=ctx.author, user2=member)
         embed = await view.setup_embed()
 
-        # Send the message
         await ctx.reply(
             embed=embed,
             silent=True,
             view=view,
         )
 
-    @commands.hybrid_command(name="rr", description="A simple russian roulette game.", aliases=['russianroulette'])
+    @commands.hybrid_command(name="rr", description="Russian roulette", aliases=['russianroulette'])
     async def rr(self, ctx: commands.Context,
                  member: discord.Member = commands.parameter(
                      converter=commands.MemberConverter,
@@ -109,45 +80,67 @@ class Games(commands.Cog):
                      description="The user you want to play against.",
                      displayed_default='Bot',
                      displayed_name='Opponent'
-                 )) -> None:
-        """
-        A simple russian roulette game.
-        """
-
-        # Default opponent to bot if none is provided
+                 ),
+                 extreme: str = 'no') -> None:
         if member is None:
             member = ctx.bot.user
 
-        # Check if the user is trying to play with themselves
         if ctx.author == member:
             await ctx.reply(
-                content="Yeah, I wonder who'd win.",
+                content="???",
                 delete_after=60.0,
                 ephemeral=True,
                 silent=True,
             )
             return
-
-        # Set up message components
-        view: RussianRouletteView = RussianRouletteView(user1=ctx.author, user2=member)
+        extreme_converted = True if extreme=='extreme' else False
+        view: RussianRouletteView = RussianRouletteView(ctx.author, member, extreme=extreme_converted)
         embed: discord.Embed = await view.setup_embed()
 
-        # Send the message
         await ctx.reply(
             embed=embed,
             view=view,
             allowed_mentions=discord.AllowedMentions(users=[ctx.author, member]),
         )
+    
+    @commands.hybrid_command(name="buckshot", description="Buckshot Roulette", aliases=['buckshotroulette'])
+    async def buckshot(
+        self,
+        ctx: commands.Context,
+        players: commands.Greedy[discord.Member] = commands.parameter(
+            description='Players',
+            displayed_name='Players',
+        ),
+        *,
+        extreme: str = None
+        ) -> None:
+        extreme_converted = True if extreme=='extreme' else False
+        players_including_author = list(players)
+        players_including_author.append(ctx.author)
 
-    async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
-        await ctx.message.add_reaction('❌')
-        await ctx.send_help(ctx.command)
+        players_cleaned_up = list(set(players_including_author))
+
+        if len(players_cleaned_up) < 2:
+            await ctx.reply(
+                content="Need at least 2 players",
+                delete_after=60.0,
+                ephemeral=True,
+                silent=True,
+            )
+            return
+        
+        message = await ctx.reply(
+            embed=discord.Embed(title='Placeholder')
+        )
+        BuckshotRouletteLobbyView(message, players_cleaned_up, extreme_converted)
+
+
+    # async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
+    #     await ctx.message.add_reaction('❌')
+    #     await ctx.send_help(ctx.command)
 
 
 async def ttt_context_menu_callback(interaction: discord.Interaction, member: discord.Member) -> None:
-    """Tic-tac-toe context menu."""
-
-    # Check if the user is trying to play with themselves
     if interaction.user == member:
         await interaction.response.send_message(
             content="Yeah, I wonder who'd win.",
@@ -157,11 +150,9 @@ async def ttt_context_menu_callback(interaction: discord.Interaction, member: di
         )
         return
 
-    # Set up message components
     view = TicTacToeView(user1=interaction.user, user2=member)
     embed = await view.setup_embed()
 
-    # Send the message
     await interaction.response.send_message(
         embed=embed,
         silent=True,
@@ -170,9 +161,6 @@ async def ttt_context_menu_callback(interaction: discord.Interaction, member: di
 
 
 async def rps_context_menu_callback(interaction: discord.Interaction, member: discord.Member) -> None:
-    """Rock, paper, scissors context menu."""
-
-    # Check if the user is trying to play with themselves
     if interaction.user == member:
         await interaction.response.send_message(
             content="Yeah, I wonder who'd win.",
@@ -182,11 +170,10 @@ async def rps_context_menu_callback(interaction: discord.Interaction, member: di
         )
         return
 
-    # Set up message components
+
     view = RockPaperScissorsView(user1=interaction.user, user2=member)
     embed = await view.setup_embed()
 
-    # Send the message
     await interaction.response.send_message(
         embed=embed,
         silent=True,
@@ -195,11 +182,6 @@ async def rps_context_menu_callback(interaction: discord.Interaction, member: di
 
 
 async def rr_context_menu_callback(interaction: discord.Interaction, member: discord.Member) -> None:
-    """
-    A Russian roulette game user context menu.
-    """
-
-    # Check if the user is trying to play with themselves
     if interaction.user == member:
         await interaction.response.send_message(
             content="Yeah, I wonder who'd win.",
@@ -209,11 +191,9 @@ async def rr_context_menu_callback(interaction: discord.Interaction, member: dis
         )
         return
 
-    # Set up message components
     view: RussianRouletteView = RussianRouletteView(user1=interaction.user, user2=member)
     embed: discord.Embed = await view.setup_embed()
 
-    # Send the message
     await interaction.response.send_message(
         embed=embed,
         view=view,
@@ -221,12 +201,8 @@ async def rr_context_menu_callback(interaction: discord.Interaction, member: dis
     )
 
 
-def setup(bot: commands.Bot):
-    """
-    Doc
-    """
-
-    bot.add_cog(Games(bot))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(Games(bot))
 
     ttt_context_menu = app_commands.ContextMenu(
         name='Tic-Tac-Toe',
@@ -239,7 +215,7 @@ def setup(bot: commands.Bot):
         callback=rps_context_menu_callback,
     )
     bot.tree.add_command(rps_context_menu)
-
+    
     rr_context_menu = app_commands.ContextMenu(
         name='Russian Roulette',
         callback=rr_context_menu_callback,

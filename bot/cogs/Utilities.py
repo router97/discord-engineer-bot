@@ -1,10 +1,3 @@
-"""
-Utilities
-=========
-
-This cog module contains server utilities that are somewhat useful,
-like picking a random number or a random user from the guild.
-"""
 import datetime
 from random import randint, choice
 
@@ -13,21 +6,7 @@ from discord.ext import commands
 
 
 class Utilities(commands.Cog, name='Utilities', description='Somewhat useful commands'):
-    """
-    Utility Cog.
-
-    This cog contains various utility commands,
-    which can sometimes be useful for quality of life.
-    """
     def __init__(self, bot: commands.Bot) -> None:
-        """
-        Initializes the cog.
-
-        :param bot: The bot that this cog belongs to.
-        :type bot: commands.Bot
-        :return: Nothing.
-        :rtype: None
-        """
         self.bot: commands.Bot = bot
 
     @commands.hybrid_command(name="rand", description="Generate a random number")
@@ -47,18 +26,6 @@ class Utilities(commands.Cog, name='Utilities', description='Somewhat useful com
                 displayed_name='To',
             ),
     ) -> None:
-        """
-        Replies with a random number between fro and to.
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :param fro: From which number.
-        :type fro: int
-        :param to: To which number.
-        :type to: int
-        :return: None. The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         if fro == to or fro > to:
             embed = discord.Embed(
                 title="Error!",
@@ -94,14 +61,6 @@ class Utilities(commands.Cog, name='Utilities', description='Somewhat useful com
             self,
             ctx: commands.Context
     ) -> None:
-        """
-        Pings a random member from the guild the command was invoked in.
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :return: None. The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         real_members: list[discord.Member] = [member for member in ctx.guild.members if not member.bot]
 
         if not real_members:
@@ -141,18 +100,6 @@ class Utilities(commands.Cog, name='Utilities', description='Somewhat useful com
                 displayed_name='Title',
             ),
     ) -> None:
-        """
-        Replies with an embed, which lists provided roles and their respectful members.
-
-        :param ctx: The context in which the command is invoked.
-        :type ctx: commands.Context
-        :param title: The title of the produced embed
-        :type title: str
-        :param roles: The roles to list
-        :type roles: commands.Greedy[discord.Role]
-        :return: None. The function only sends a Discord message, doesn't return anything in the code.
-        :rtype: None
-        """
         embed: discord.Embed = discord.Embed(
             color=discord.Color.teal(),
             title=title,
@@ -184,13 +131,5 @@ class Utilities(commands.Cog, name='Utilities', description='Somewhat useful com
         await ctx.send_help(ctx.command)
 
 
-def setup(bot: commands.Bot) -> None:
-    """
-    Sets up the cog.
-
-    :param bot: The bot, to which the cog is being added.
-    :type bot: commands.Bot
-    :return: Nothing.
-    :rtype: None
-    """
-    bot.add_cog(Utilities(bot))
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(Utilities(bot))
