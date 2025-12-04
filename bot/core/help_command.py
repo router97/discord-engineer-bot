@@ -1,73 +1,205 @@
+import asyncio
+
 import discord
 from discord.ext import commands
 
 from .config import COMMAND_PREFIX
 
 # TODO: hide hidden commands and cogs
+# TODO: Add pagination (not really necessary, just to minmax)
 
-class SendBotHelpSelect(discord.ui.Select):
-    def __init__(self, help_command: commands.HelpCommand, cogs: list[commands.Cog]) -> None:
-        self.help_command: commands.HelpCommand = help_command
-        self.cog_name_mapping: dict[str, commands.Cog] = {cog.qualified_name: cog for cog in cogs}
+BUTTON_LABEL = '➤'
 
-        options: list[discord.SelectOption] = [
-            discord.SelectOption(
-                label=cog.qualified_name,
-                value=cog.qualified_name
-            ) for cog in cogs
-        ]
 
-        super().__init__(
-            placeholder="Select category...",
-            options=options,
+class SendBotHelpButton(discord.ui.Button):
+    def __init__(self, help_command: commands.HelpCommand, mapping, *, label=BUTTON_LABEL):
+        self.help_command = help_command
+        self.mapping = mapping
+        super().__init__(style=discord.ButtonStyle.primary, label=label)
+    
+    async def callback(self, interaction: discord.Interaction):
+        asyncio.gather(
+            self.help_command.send_bot_help(self.mapping),
+            interaction.message.delete()
         )
 
-    async def callback(self, interaction: discord.Interaction) -> None:
-        await interaction.response.defer()
 
-        picked_cog: commands.Cog = self.cog_name_mapping[self.values[0]]
+class SendCogHelpButton(discord.ui.Button):
+    def __init__(self, help_command: commands.HelpCommand, cog: commands.Cog, *, label=BUTTON_LABEL):
+        self.help_command = help_command
+        self.cog = cog
+        super().__init__(style=discord.ButtonStyle.primary, label=label)
+    
+    async def callback(self, interaction: discord.Interaction):
+        asyncio.gather(
+            self.help_command.send_cog_help(self.cog),
+            interaction.message.delete()
+        )
 
-        await self.help_command.send_cog_help(picked_cog)
+
+class SendCommandHelpButton(discord.ui.Button):
+    def __init__(self, help_command: commands.HelpCommand, command: commands.Command, *, label=BUTTON_LABEL):
+        self.help_command = help_command
+        self.command = command
+        super().__init__(style=discord.ButtonStyle.primary, label=label)
+    
+    async def callback(self, interaction: discord.Interaction):
+        asyncio.gather(
+            self.help_command.send_command_help(self.command),
+            interaction.message.delete()
+        )
 
 
-class SendBotHelpView(discord.ui.View):
-    def __init__(self, help_command: commands.HelpCommand, cogs: list[commands.Cog]) -> None:
+class SendBotHelpView(discord.ui.LayoutView):
+    def __init__(self, help_command: commands.HelpCommand, mapping: dict[commands.Cog | None, list[commands.Command]]) -> None:
+        self.help_command = help_command
+        self.mapping = mapping
         super().__init__()
-        self.add_item(SendBotHelpSelect(help_command, cogs))
+
+        self.sections: list[discord.ui.Section] = []
+        for cog, _commands in mapping.items():
+            if cog is None:
+                continue
+
+            button = SendCogHelpButton(help_command, cog)
+
+            self.sections.append(
+                discord.ui.Section(
+                    discord.ui.TextDisplay(
+                        f"### {cog.qualified_name}\n"
+                        f"{' '.join([f'`{COMMAND_PREFIX}{command.name}`' for command in _commands])}"
+                    ),
+                    accessory=button,
+                )
+            )
+        container_items = []
+
+        container_items.append(
+            discord.ui.TextDisplay(
+                content = '## Available commands:\n'
+                          'You can get detailed help information for every command '
+                          f"by passing its name, \nfor example: `{COMMAND_PREFIX}help ip`"
+            )
+        )
+        container_items.append(
+            discord.ui.Separator()
+        )
+
+        for section in self.sections:
+            container_items.append(section)
+            container_items.append(
+                discord.ui.Separator()
+            )
+        container_items.pop()
+
+        container = discord.ui.Container(
+            *container_items,
+            accent_color=discord.Color.pink(),
+        )
+        self.add_item(container)
+
+
+class SendCogHelpView(discord.ui.LayoutView):
+    def __init__(self, help_command: commands.HelpCommand, cog: commands.Cog) -> None:
+        self.help_command = help_command
+        self.cog = cog
+        super().__init__()
+
+        self.sections: list[discord.ui.Section] = []
+        for command in cog.walk_commands():
+            button = SendCommandHelpButton(help_command, command)
+
+            self.sections.append(
+                discord.ui.Section(
+                    discord.ui.TextDisplay(
+                        f"### {COMMAND_PREFIX}{command.qualified_name}\n"
+                        f"{command.description}"
+                    ),
+                    accessory=button,
+                )
+            )
+        container_items = []
+
+        container_items.append(
+            discord.ui.TextDisplay(
+                content = f'## Available commands in category {cog.qualified_name}:\n'
+                          'You can get detailed help information for every command '
+                          f"by passing its name, \nfor example: `{COMMAND_PREFIX}help ip`"
+            )
+        )
+        container_items.append(
+            discord.ui.ActionRow(
+                SendBotHelpButton(help_command, help_command.get_bot_mapping(), label='⮜ All commands')
+            )
+        )
+        container_items.append(
+            discord.ui.Separator()
+        )
+
+        for section in self.sections:
+            container_items.append(section)
+            container_items.append(
+                discord.ui.Separator()
+            )
+        container_items.pop()
+
+        container = discord.ui.Container(
+            *container_items,
+            accent_color=discord.Color.pink(),
+        )
+        self.add_item(container)
+
+
+class SendCommandHelpView(discord.ui.LayoutView):
+    def __init__(self, help_command: commands.HelpCommand, command: commands.Command) -> None:
+        self.help_command = help_command
+        self.command = command
+        super().__init__()
+
+        container_items = []
+
+        container_items.append(
+            discord.ui.TextDisplay(
+                content = f'## Command `{command.qualified_name}`\n'
+                          f'{command.description}'
+            )
+        )
+        container_items.append(
+            discord.ui.ActionRow(
+                SendCogHelpButton(help_command, command.cog, label=f'⮜ {command.cog.qualified_name}')
+            )
+        )
+        container_items.append(
+            discord.ui.Separator()
+        )
+        for parameter in command.clean_params.values():
+            container_items.append(
+                discord.ui.TextDisplay(
+                    content = f'### {parameter.displayed_name}\n'
+                            f'{parameter.description}'
+                )
+            )
+            container_items.append(
+                discord.ui.Separator()
+            )
+        container_items.pop()
+        
+
+        container = discord.ui.Container(
+            *container_items,
+            accent_color=discord.Color.pink(),
+        )
+        self.add_item(container)
 
 
 class CustomHelpCommand(commands.HelpCommand):
     def __init__(self) -> None:
         super().__init__()
 
-    async def send_bot_help(self, mapping) -> None:
-        embed: discord.Embed = discord.Embed(
-            title='Available commands:',
-            color=discord.Color.teal(),
-            description='You can get detailed help information for every command '
-                        f"by passing its name, for example: `{COMMAND_PREFIX}help ip`",
-        )
-        embed.set_thumbnail(url=self.context.bot.user.display_avatar.url)
 
-        cogs_to_list: list[commands.Cog] = []
-        for cog, cog_commands in mapping.items():
-            if not cog:
-                embed.add_field(
-                    name=f"No Category:",
-                    value=' '.join([f'`{COMMAND_PREFIX}{command.name}`' for command in cog_commands]),
-                    inline=False,
-                )
-            else:
-                cogs_to_list.append(cog)
-                embed.add_field(
-                    name=f"{cog.qualified_name} ({COMMAND_PREFIX}help {cog.qualified_name})",
-                    value=' '.join([f'`{COMMAND_PREFIX}{command.name}`' for command in cog_commands]),
-                    inline=False,
-                )
-
-        view: SendBotHelpView = SendBotHelpView(help_command=self, cogs=cogs_to_list)
+    async def send_bot_help(self, mapping: dict[commands.Cog | None, list[commands.Command]]) -> None:
+        view = SendBotHelpView(self, mapping)
         await self.get_destination().send(
-            embed=embed,
             delete_after=120.0,
             allowed_mentions=discord.AllowedMentions.none(),
             view=view,
@@ -75,52 +207,20 @@ class CustomHelpCommand(commands.HelpCommand):
         )
 
     async def send_cog_help(self, cog: commands.Cog) -> None:
-        embed: discord.Embed = discord.Embed(
-            title=f'Available commands of category {cog.qualified_name}:',
-            color=discord.Color.teal(),
-            description='You can get detailed help information for every command'
-                        f"by passing its name, for example: `{COMMAND_PREFIX}help ip`",
-        )
-        embed.set_thumbnail(url=self.context.bot.user.display_avatar.url)
-
-        for command in cog.get_commands():
-            embed.add_field(
-                name=f"`{COMMAND_PREFIX}{command.qualified_name}`",
-                value=command.description,
-                inline=False,
-            )
-
+        view = SendCogHelpView(self, cog)
         await self.get_destination().send(
-            embed=embed,
             delete_after=120.0,
             allowed_mentions=discord.AllowedMentions.none(),
+            view=view,
             silent=True,
         )
 
-    async def send_group_help(self, group) -> None:
-        return await super().send_group_help(group)
 
     async def send_command_help(self, command: commands.Command) -> None:
-        embed: discord.Embed = discord.Embed(
-            color=discord.Color.teal(),
-            description=command.description,
-        )
-        embed.set_author(name=f'Command {COMMAND_PREFIX}{command.qualified_name}')
-
-        for parameter in command.clean_params.values():
-            description = parameter.description if parameter.description else ''
-            if parameter.displayed_default:
-                description += f'\nDefaults to {parameter.displayed_default}'
-
-            embed.add_field(
-                name=parameter.displayed_name,
-                value=description,
-                inline=False,
-            )
-
+        view = SendCommandHelpView(self, command)
         await self.get_destination().send(
-            embed=embed,
             delete_after=120.0,
             allowed_mentions=discord.AllowedMentions.none(),
+            view=view,
             silent=True,
         )
