@@ -8,6 +8,9 @@ from discord import app_commands
 from faker import Faker
 
 from  core.bot import setup_activity
+from . import acceptable_errors
+
+from core.bot import logger
 
 faker = Faker()
 
@@ -63,19 +66,26 @@ class Fun(commands.Cog):
                 displayed_name='Activity',
             )
     ) -> None:
+        if not name:
+            raise commands.MissingRequiredArgument()
+
         await setup_activity(name)
+        
         await ctx.reply(
             content=f"Changed the bot's presence to `{name}`.",
-            delete_after=60.0,
             allowed_mentions=discord.AllowedMentions.none(),
             ephemeral=True,
             silent=True,
+            delete_after=30,
         )
-        await ctx.message.delete(delay=60.0)
+        await ctx.message.delete()
 
     async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
         await ctx.message.add_reaction('❌')
         await ctx.send_help(ctx.command)
+
+        if type(error) not in acceptable_errors:
+            logger.error("Error in cog %s.", self.qualified_name, exc_info=error)
 
 
 async def setup(bot: commands.Bot):

@@ -8,6 +8,9 @@ from discord.ext import commands
 
 from numerize.numerize import numerize
 
+from core.bot import logger
+from . import acceptable_errors
+
 
 class Info(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -273,6 +276,9 @@ class Info(commands.Cog):
     async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
         await ctx.message.add_reaction('❌')
         await ctx.send_help(ctx.command)
+
+        if type(error) not in acceptable_errors:
+            logger.error("Error in cog %s.", self.qualified_name, exc_info=error)
 
 
 async def user_info_context_menu_callback(interaction: discord.Interaction, user: discord.Member) -> None:

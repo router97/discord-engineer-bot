@@ -4,6 +4,9 @@ from random import randint, choice
 import discord
 from discord.ext import commands
 
+from core.bot import logger
+from . import acceptable_errors
+
 
 class Utilities(commands.Cog, name='Utilities', description='Somewhat useful commands'):
     def __init__(self, bot: commands.Bot) -> None:
@@ -129,6 +132,9 @@ class Utilities(commands.Cog, name='Utilities', description='Somewhat useful com
     async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
         await ctx.message.add_reaction('❌')
         await ctx.send_help(ctx.command)
+
+        if type(error) not in acceptable_errors:
+            logger.error("Error in cog %s.", self.qualified_name, exc_info=error)
 
 
 async def setup(bot: commands.Bot) -> None:

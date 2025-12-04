@@ -5,6 +5,8 @@ import asyncio
 import datetime
 
 from views.Moderation.Mutes import MutesView
+from core.bot import logger
+from . import acceptable_errors
 
 
 class InvalidDurationException(commands.CommandError):
@@ -73,6 +75,7 @@ class Moderation(commands.Cog):
                       displayed_name='TARGET',
                       description="we'll do the dirty work."
                   ), 
+                  *,
                   reason: str = commands.parameter(
                       default='No reason provided',
                       displayed_default='No reason provided',
@@ -84,11 +87,15 @@ class Moderation(commands.Cog):
         user_highest_role = ctx.author.roles[-1]
 
         if user_highest_role <= target_highest_role:
-            await ctx.reply('The person you are trying to ban has either a role higher than yours or the same.')
+            await ctx.reply('The person you are trying to ban has either a role higher than yours or the same.', delete_after=15)
             raise Exception()
         
         try:
             await target.ban(reason=reason)
+            try:
+                await ctx.message.add_reaction('✅')
+            except:
+                pass
         except Exception as e:
             await ctx.reply('An unknown error has occured.')
             raise e
@@ -106,6 +113,10 @@ class Moderation(commands.Cog):
                     )) -> None:
         try:
             await ctx.guild.unban(target)
+            try:
+                await ctx.message.add_reaction('✅')
+            except:
+                pass
         except Exception as e:
             await ctx.reply('An unknown error has occured.')
             raise e
@@ -121,6 +132,7 @@ class Moderation(commands.Cog):
                         displayed_name='TARGET',
                         description="we'll do the dirty work."
                     ), 
+                    *,
                     reason: str = commands.parameter(
                         default='No reason provided',
                         displayed_default='No reason provided',
@@ -132,12 +144,16 @@ class Moderation(commands.Cog):
         user_highest_role = ctx.author.roles[-1]
 
         if user_highest_role <= target_highest_role:
-            await ctx.reply('The person you are trying to kick has either a role higher than yours or the same.')
+            await ctx.reply('The person you are trying to kick has either a role higher than yours or the same.', delete_after=15)
             return
         
         
         try:
             await target.kick(reason=reason)
+            try:
+                await ctx.message.add_reaction('✅')
+            except:
+                pass
         except Exception as e:
             await ctx.reply('An unknown error has occured.')
             raise e
@@ -155,8 +171,8 @@ class Moderation(commands.Cog):
         if not mutes_info:
             await ctx.reply('No one is currently muted in this guild.')
             return
-
-        message = await ctx.reply(view=MutesView(data=mutes_info))
+        
+        await ctx.reply(view=MutesView(data=mutes_info))
     
 
     commands.has_permissions(mute_members=True)
@@ -167,13 +183,14 @@ class Moderation(commands.Cog):
                         displayed_name='TARGET',
                         description="we'll do the paperwork."
                     ), 
-                    duration = commands.parameter(
+                    duration: datetime.timedelta = commands.parameter(
                         converter=DurationConverter(), 
                         default=datetime.timedelta(days=28),
                         displayed_default='28 days',
                         displayed_name='Duration',
                         description='The duration of the mute (up to 28 days)'
                     ), 
+                    *,
                     reason: str = commands.parameter(
                         default='No reason provided',
                         displayed_default='No reason provided',
@@ -185,11 +202,20 @@ class Moderation(commands.Cog):
         user_highest_role = ctx.author.roles[-1]
 
         if user_highest_role <= target_highest_role:
-            await ctx.reply('The person you are trying to mute has either a role higher than yours or the same.')
+            await ctx.reply('The person you are trying to mute has either a role higher than yours or the same.', delete_after=15)
             return
         
+        if target.is_timed_out():
+            await ctx.reply('The person was already muted. Overwriting the original mute.', delete_after=15)
+        
+        if duration.days >= 28:
+            duration = datetime.timedelta(days=28)
         try:
             await target.timeout(duration, reason=reason)
+            try:
+                await ctx.message.add_reaction('✅')
+            except:
+                pass
         except Exception as e:
             await ctx.reply(f'An error has occured. {e}')
             raise e
@@ -209,7 +235,7 @@ class Moderation(commands.Cog):
         user_highest_role = ctx.author.roles[-1]
 
         if user_highest_role <= target_highest_role:
-            await ctx.reply('The person you are trying to mute has either a role higher than yours or the same.')
+            await ctx.reply('The person you are trying to mute has either a role higher than yours or the same.', delete_after=15)
             return
         
         if not target.is_timed_out():
@@ -218,15 +244,22 @@ class Moderation(commands.Cog):
 
         try:
             await target.timeout(None)
+            try:
+                await ctx.message.add_reaction('✅')
+            except:
+                pass
         except Exception as e:
             await ctx.reply(f'An error has occured. {e}')
             raise e
         else:
             await ctx.reply(f'Successfully unmuted {target.display_name}({target.id})', delete_after=15)
 
-    # async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
-    #     await ctx.message.add_reaction('❌')
-    #     await ctx.send_help(ctx.command)
+    async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
+        await ctx.message.add_reaction('❌')
+        await ctx.send_help(ctx.command)
+
+        if type(error) not in acceptable_errors:
+            logger.error("Error in cog %s.", self.qualified_name, exc_info=error)
 
 
 async def setup(bot: commands.Bot):

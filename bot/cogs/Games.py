@@ -7,6 +7,9 @@ from views.Games.RockPaperScissors import RockPaperScissorsView
 from views.Games.RussianRoulette import RussianRouletteView
 from views.Games.BuckshotRoulette import BuckshotRouletteLobbyView
 
+from core.bot import logger
+from . import acceptable_errors
+
 
 class Games(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -81,7 +84,12 @@ class Games(commands.Cog):
                     displayed_default='Bot',
                     displayed_name='Player 2',
                  ),
-                 extreme: str = 'no') -> None:
+                 extreme: str = commands.parameter(
+                     default='no',
+                     displayed_default='Casual',
+                     displayed_name='Mode',
+                     description='Currently available modes: Casual(default), Extreme(punish on death)'
+                 )) -> None:
         if member is None:
             member = ctx.bot.user
 
@@ -93,7 +101,7 @@ class Games(commands.Cog):
                 silent=True,
             )
             return
-        extreme_converted = True if extreme=='extreme' else False
+        extreme_converted = True if extreme.casefold()=='extreme' else False
         view: RussianRouletteView = RussianRouletteView(ctx.author, member, extreme=extreme_converted)
         embed: discord.Embed = await view.setup_embed()
 
@@ -142,6 +150,9 @@ class Games(commands.Cog):
     async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
         await ctx.message.add_reaction('❌')
         await ctx.send_help(ctx.command)
+
+        if type(error) not in acceptable_errors:
+            logger.error("Error in cog %s.", self.qualified_name, exc_info=error)
 
 
 async def ttt_context_menu_callback(interaction: discord.Interaction, member: discord.Member) -> None:

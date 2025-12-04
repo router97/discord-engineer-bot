@@ -1,3 +1,5 @@
+from discord.ext import commands
+
 __all__ = 'extensions'
 
 extensions = [
@@ -7,4 +9,9 @@ extensions = [
     'Fun', 
     'Admin', 
     'Moderation',
+]
+
+acceptable_errors = [
+    commands.MissingRequiredArgument,
+    commands.CommandNotFound,
 ]

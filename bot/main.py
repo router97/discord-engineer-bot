@@ -1,20 +1,16 @@
-import logging
 import atexit
 import asyncio
 
-from core.bot import bot, setup_activity
+from core.bot import bot, setup_activity, logger
 import core.config as config
 
 from cogs import extensions
 
-logger = logging.getLogger(name='discord.log')
-
-
-bot.extension_path = 'cogs'
 
 async def setup_cogs() -> None:
     for extension in extensions:
         await bot.load_extension(f"{bot.extension_path}.{extension}")
+        logger.info('Loaded extension %s.', f"{bot.extension_path}.{extension}")
     
     await bot.tree.sync()
 
