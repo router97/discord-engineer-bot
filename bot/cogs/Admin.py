@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import asyncio
+from database.models.guilds import GuildMemberConfig
 
 from core.bot import logger
 from . import acceptable_errors
@@ -28,6 +29,24 @@ class Admin(commands.Cog):
             ctx.reply(f'Successfully reloaded {desired_extension}', delete_after=15)
         )
         logger.info('Reloaded extension %s.', desired_extension)
+
+    @commands.hybrid_command(name="get", description="test")
+    async def get(self, ctx: commands.Context) -> None:
+        result = GuildMemberConfig.get(
+            guild_id = ctx.guild.id,
+            _id = ctx.author.id
+        )
+        await ctx.reply(str(result))
+    
+    @commands.hybrid_command(name="save", description="test")
+    async def save(self, ctx: commands.Context) -> None:
+        newconfig = GuildMemberConfig(
+            guild_id=ctx.guild.id,
+            id=ctx.author.id,
+        )
+        newconfig.save()
+        await ctx.reply('Saved', delete_after=15)
+        
 
     async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
         await ctx.message.add_reaction('❌')
