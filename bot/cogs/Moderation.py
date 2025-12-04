@@ -156,8 +156,7 @@ class Moderation(commands.Cog):
             await ctx.reply('No one is currently muted in this guild.')
             return
 
-        message = await ctx.reply('.')
-        view = MutesView(data = mutes_info, message = message)
+        message = await ctx.reply(view=MutesView(data=mutes_info))
     
 
     commands.has_permissions(mute_members=True)
@@ -225,13 +224,9 @@ class Moderation(commands.Cog):
         else:
             await ctx.reply(f'Successfully unmuted {target.display_name}({target.id})', delete_after=15)
 
-    async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
-        try:
-            await ctx.message.add_reaction('❌')
-            result = await ctx.send_help(ctx.command)
-            print(result)
-        except Exception as e:
-            print(e)
+    # async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
+    #     await ctx.message.add_reaction('❌')
+    #     await ctx.send_help(ctx.command)
 
 
 async def setup(bot: commands.Bot):

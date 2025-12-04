@@ -251,12 +251,12 @@ class Info(commands.Cog):
             icon_url=ctx.bot.application.owner.display_avatar.url,
             url=f"https://discord.com/users/{ctx.bot.application.owner.id}",
         )
-        embed.add_field(name='GitHub', value='[Repository](https://github.com/router97/discord-engineer-bot)')
-        embed.add_field(name='Discord Server', value='[Invite](https://discord.gg/vz28BWYsab)')
+        embed.add_field(name='Source Code', value='[Github](https://github.com/router97/discord-engineer-bot)')
+        embed.add_field(name='Privacy Policy', value='[Github](https://github.com/router97/discord-engineer-bot/blob/496ce3c086cbe40186015cd629390be40b4e6a2b/PRIVACY-POLICY.md)')
+        embed.add_field(name='Terms of Service', value='[Github](https://github.com/router97/discord-engineer-bot/blob/496ce3c086cbe40186015cd629390be40b4e6a2b/TERMS-OF-SERVICE.md)')
 
         if ctx.bot.user.display_avatar:
             embed.set_thumbnail(url=ctx.bot.user.display_avatar.url)
-        embed.set_footer(text='Bot made by Nortex25(router97)')
 
         await ctx.reply(
             embed=embed,

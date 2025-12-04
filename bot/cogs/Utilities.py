@@ -52,7 +52,7 @@ class Utilities(commands.Cog, name='Utilities', description='Somewhat useful com
         try:
             await ctx.message.delete(delay=60.0)
         except (discord.Forbidden, discord.NotFound, discord.HTTPException) as e:
-            print(f'Failed deleting message! {e}')
+            pass
 
     @commands.hybrid_command(name="randmember", description="Ping a random member from the server")
     @commands.guild_only()
@@ -80,7 +80,7 @@ class Utilities(commands.Cog, name='Utilities', description='Somewhat useful com
             try:
                 await ctx.message.delete(delay=60.0)
             except (discord.Forbidden, discord.NotFound, discord.HTTPException) as e:
-                print(f'Failed deleting message! {e}')
+                pass
 
         random_member: discord.Member = choice(real_members)
         await ctx.reply(random_member.mention)
