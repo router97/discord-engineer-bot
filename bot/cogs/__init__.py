@@ -9,6 +9,7 @@ extensions = [
     'Fun', 
     'Admin', 
     'Moderation',
+    'Ranking',
 ]
 
 acceptable_errors = [

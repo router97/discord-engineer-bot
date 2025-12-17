@@ -4,10 +4,8 @@ from random import choice
 
 import discord
 from discord.ext import commands
-from discord import app_commands
 from faker import Faker
 
-from  core.bot import setup_activity
 from . import acceptable_errors
 
 from core.bot import logger
@@ -16,6 +14,9 @@ faker = Faker()
 
 
 class Fun(commands.Cog):
+    needs_api = False
+
+
     RANDOM_REPLIES: list[str] = [
         "I'm good",
         "KYS = Keep Yourself Safe",
@@ -69,7 +70,7 @@ class Fun(commands.Cog):
         if not name:
             raise commands.MissingRequiredArgument()
 
-        await setup_activity(name)
+        await self.bot.setup_activity(name)
         
         await ctx.reply(
             content=f"Changed the bot's presence to `{name}`.",
@@ -88,5 +89,8 @@ class Fun(commands.Cog):
             logger.error("Error in cog %s.", self.qualified_name, exc_info=error)
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
+    if Fun.needs_api and not bot._api_enabled:
+        raise commands.ExtensionError('This extension needs api enabled.')
+    
     await bot.add_cog(Fun(bot))

@@ -13,6 +13,9 @@ from . import acceptable_errors
 
 
 class Info(commands.Cog):
+    needs_api = False
+
+
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
@@ -308,6 +311,9 @@ async def user_info_context_menu_callback(interaction: discord.Interaction, user
 
 
 async def setup(bot: commands.Bot):
+    if Info.needs_api and not bot._api_enabled:
+        raise commands.ExtensionError('This extension needs api enabled.')
+    
     await bot.add_cog(Info(bot))
 
     user_info_context_menu = app_commands.ContextMenu(

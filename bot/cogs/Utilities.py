@@ -9,6 +9,8 @@ from . import acceptable_errors
 
 
 class Utilities(commands.Cog, name='Utilities', description='Somewhat useful commands'):
+    needs_api = False
+
     def __init__(self, bot: commands.Bot) -> None:
         self.bot: commands.Bot = bot
 
@@ -138,4 +140,7 @@ class Utilities(commands.Cog, name='Utilities', description='Somewhat useful com
 
 
 async def setup(bot: commands.Bot) -> None:
+    if Utilities.needs_api and not bot._api_enabled:
+        raise commands.ExtensionError('This extension needs api enabled.')
+    
     await bot.add_cog(Utilities(bot))

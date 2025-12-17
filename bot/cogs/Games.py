@@ -12,6 +12,9 @@ from . import acceptable_errors
 
 
 class Games(commands.Cog):
+    needs_api = False
+
+
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
@@ -217,6 +220,10 @@ async def rr_context_menu_callback(interaction: discord.Interaction, member: dis
 
 
 async def setup(bot: commands.Bot):
+    
+    if Games.needs_api and not bot._api_enabled:
+        raise commands.ExtensionError('This extension needs api enabled.')
+    
     await bot.add_cog(Games(bot))
 
     ttt_context_menu = app_commands.ContextMenu(

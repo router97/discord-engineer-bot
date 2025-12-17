@@ -64,6 +64,9 @@ class DurationConverter(commands.Converter):
 
 
 class Moderation(commands.Cog):
+    needs_api = False
+
+
     def __init__(self, bot: commands.Bot) -> None:
         self.bot: commands.Bot = bot
     
@@ -262,5 +265,8 @@ class Moderation(commands.Cog):
             logger.error("Error in cog %s.", self.qualified_name, exc_info=error)
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
+    if Moderation.needs_api and not bot._api_enabled:
+        raise commands.ExtensionError('This extension needs api enabled.')
+    
     await bot.add_cog(Moderation(bot))
