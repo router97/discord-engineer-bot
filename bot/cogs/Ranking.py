@@ -3,6 +3,7 @@ from discord.ext import commands
 import asyncio
 
 from core.bot import logger, EngineerBot
+from views.Ranking.Leaders import LeadersView
 from . import acceptable_errors
 
 class Ranking(commands.Cog):
@@ -57,7 +58,42 @@ class Ranking(commands.Cog):
         json_data = json_response[0] if response and response.status == 200 else None
             
         await ctx.reply(json_data['chat_experience'])
+    
+    @commands.hybrid_command(name="leaders", description="Check highest ranks on the server.")
+    async def leaders(self, ctx: commands.Context) -> None:
+        async with self.bot.session.get(
+                '/api/guild_members/', 
+                params = {
+                    'guild__id': ctx.guild.id,
+                    'ordering': '-chat_experience',
+                },
+                ) as response:
+            json_response: list[dict] = await response.json()
         
+        if not json_response:
+            ctx.reply("Couldn't find anyone.")
+            return
+
+        cleaned_up_json = []
+        for item in json_response:
+            item_copy = item.copy()
+            user_id = int(item_copy['user'].split('/')[-2])
+            cached_user = self.bot.get_user(user_id)
+
+            guild_id = int(item_copy['guild'].split('/')[-2])
+            cached_guild = self.bot.get_guild(guild_id)
+
+            if not cached_user and cached_guild:
+                cleaned_up_json.append(item_copy)
+                continue
+
+            item_copy['guild'] = cached_guild.name
+            item_copy['user'] = cached_user.display_name
+            cleaned_up_json.append(item_copy)
+            
+
+        view = LeadersView(cleaned_up_json)
+        await ctx.reply(view=view)
 
     async def cog_command_error(self, ctx: commands.Context, error: Exception) -> None:
         await ctx.message.add_reaction('❌')
